@@ -1,0 +1,140 @@
+<html>
+    <header>
+        <link rel="stylesheet" href="./bootstrap-3.3.7-dist\css\bootstrap.min.css" >
+        <script type="javascript" src="./bootstrap-3.3.7-dist\js\bootstrap.min.js" ></script>
+        <script>
+            var jspLoadTool = function() {
+                var JSP_SCRIPT;
+                return function(url) {
+                    if(JSP_SCRIPT){
+                        document.getElementsByTagName("head")[0].removeChild(JSP_SCRIPT);
+                    }
+                    JSP_SCRIPT= document.createElement("script");
+                    JSP_SCRIPT.type = "text/javascript";
+                    JSP_SCRIPT.charset = "UTF-8";
+                    JSP_SCRIPT.src = url + "&random4cache=" + Math.random();
+                    document.getElementsByTagName("head")[0].appendChild(JSP_SCRIPT);
+                };
+            }();
+
+            
+        function geWsUrl(){
+    
+            var goodUrl = document.getElementById("inputGoodUrl").value;
+
+            console.log(goodUrl)
+            goodUrl=encodeURIComponent(goodUrl)
+            console.log(goodUrl)
+            if(goodUrl == ""){
+                alert("商品地址不能为空！")
+            }
+
+            var url = "http://localhost:4000/api/geWsUrl?goodUrl=" + goodUrl + "&callback=openCallback"
+            jspLoadTool(url)
+        }
+
+        function openCallback(res){
+            console.log(res)
+            if (res.code == -1) {
+                alert(res.msg)
+            }else{
+                document.getElementById("sampWsUrl").innerHTML = "调试地址 > " + res.wsUrl
+            }
+        }
+
+
+        function clickBtnByText(){
+            var text = document.getElementById("inputBtnText").value;
+            console.log(text)
+            if(text == ""){
+                alert("文本不能为空！")
+            }
+
+            var url = "http://localhost:4000/api/clickBtnByText?text=" + text + "&callback=clickCallback"
+            jspLoadTool(url)
+        }
+        
+        function openCallback(res){
+            console.log(res)
+            if (res.code == -1) {
+                alert(res.msg)
+            }
+        }
+        </script>
+    </header>
+    <body>
+        <div class="container-fluid col-lg-6">
+            <div class="page-header">
+                <h2>大福酱酱的秒杀神器!</h1>
+            </div>
+
+            <!-- 第1步 -->
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Step 1</h3>
+                </div>
+                
+                <div class="panel-body">
+                    打开需要抢购的商品页面，并完成电商账号登陆          
+                 </div>
+            </div>
+
+            <!-- 第2步 -->
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Step 2</h3>
+                </div>
+                
+                <div class="panel-body">
+                    输入商品地址，点击“获取调试地址”                    
+                    <div class="input-group col-lg-12">
+                        <input id="inputGoodUrl" type="text" class="form-control" placeholder="输入商品页面地址">
+                        <span class="input-group-btn">
+                        <button class="btn btn-default" onclick="geWsUrl()" type="button">获取调试地址</button>
+                        </span>
+                    </div>
+                    <samp id="sampWsUrl"></samp>
+                </div>
+            </div>
+
+            <!-- 第3步 -->
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Step 3</h3>
+                </div>
+                
+                <div class="panel-body">
+                    输入抢购按钮包含的中文                 
+                    <div class="input-group col-lg-12">
+                        <input id="inputBtnText" type="text" class="form-control" placeholder="输入商品页面地址">
+                        <span class="input-group-btn">
+                        <button class="btn btn-default" onclick="clickBtnByText()" type="button">测试</button>
+                        </span>
+                    </div>
+                    <samp id="sampWsUrl"></samp>
+                </div>
+            </div>
+
+
+            <!-- 第3步 
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Step 3</h3>
+                </div>
+                
+                <div class="panel-body">
+                    输入商品地址，点击“打开”，浏览器将自动跳转。                    
+                    <div class="input-group col-lg-12">
+                        <input id="inputGoodUrl" type="text" class="form-control" placeholder="输入商品页面地址">
+                        <span class="input-group-btn">
+                        <button class="btn btn-default" onclick="openUrl()" type="button">打开</button>
+                        </span>
+                    </div>
+                    不要省略 http:// 或 https://
+                </div>
+            </div>-->
+
+        </div>
+
+    </body>
+</html>
