@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"fmt"
 //	"github.com/chromedp/cdproto/cdp"
 	"github.com/chromedp/chromedp"
 	"os/exec"
@@ -17,6 +18,7 @@ var remoteDebugPort string
 var remoteDebugUrl string
 var globalAllocCtx context.Context = nil
 var globalTaskCtx context.Context = nil
+var UIUrl string = ""
 
 // chrome 调试信息对象
 type Page struct {
@@ -52,9 +54,11 @@ func _startChrome() error{
 	log.Println("       可执行文件位置：" + chromePath)
 	log.Println("       远程调试端口：" + remoteDebugPort)
 
+	UIUrl = "http://localhost:" + port + "/"
+
 	// 拼接启动命令
 	// cmd.exe /c start "" "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe" --new-window --remote-debugging-port=9222 http://localhost:9222/json
-	cmd := exec.Command("cmd.exe", "/c", "start","", chromePath, "--remote-debugging-port=" + remoteDebugPort, "http://localhost:" + port)
+	cmd := exec.Command("cmd.exe", "/c", "start","", chromePath, "--remote-debugging-port=" + remoteDebugPort, UIUrl)
 	err := cmd.Run()
 	if err != nil {
 
@@ -68,7 +72,8 @@ func _startChrome() error{
 	return nil
 }
 
-func GetWsUrl(goodUrl string) (string, error){
+// 打开商品页
+func OpenPage(goodUrl string) (string, error){
 
 	log.Println("CHROME 远程调试地址 > 获取中...")
 	log.Println("       请求地址：" + "http://localhost:" + remoteDebugPort + "/json")
@@ -109,7 +114,7 @@ func GetWsUrl(goodUrl string) (string, error){
 			// 遍历找到调试信息
 			for i:=0;i<len(pageArr);i++ {
 				
-				if pageArr[i].Url == goodUrl {
+				if pageArr[i].Url == UIUrl {
 					remoteDebugUrl = pageArr[i].WebSocketDebuggerUrl
 					break
 				}
@@ -126,6 +131,17 @@ func GetWsUrl(goodUrl string) (string, error){
 		globalTaskCtx, _ = chromedp.NewContext(globalAllocCtx, chromedp.WithLogf(log.Printf))
 		log.Println("刷新远程调试上下文 > 结束")
 
+		log.Println("打开商品页 > 开始")
+		err := chromedp.Run(globalTaskCtx,
+			chromedp.Navigate(goodUrl),	
+		)
+		if err!= nil {
+			log.Println(err)
+			log.Println("打开商品页 > 失败")
+			return "",err
+		}
+		log.Println("打开商品页 > 结束")
+
 		return remoteDebugUrl, nil
 	} else {
 		err := errors.New("远程调试地址 > 获取失败！请确认网址输入正确")
@@ -135,42 +151,57 @@ func GetWsUrl(goodUrl string) (string, error){
 	}
 }
 
-// // 跳转大福酱酱的抢单神器
-// func ShowWebUI(port string)  {
+// 淘宝自动秒杀 TEST DEMO
+func AutoBuyTaobaoV1(buyText string, orderText string, pwText string, payText string)  error{
 
-// 	allocCtx, _ := chromedp.NewRemoteAllocator(context.Background(), remoteDebugUrl)
-	
-// 	// also set up a custom logger
-// 	taskCtx, _ := chromedp.NewContext(allocCtx, chromedp.WithLogf(log.Printf))
+	log.Println("自动购买  > 购买按钮：" + buyText)
+	log.Println("           提交按钮：" + orderText)
+	log.Println("           支付密码：" + pwText)
+	log.Println("           付款按钮：" + payText)
 
-// 	chromedp.Run(taskCtx,
-// 		chromedp.Navigate(`http://localhost:` + port), 
-// 	)
-// }
+	// 拼接 xpath 表达式，搜索包含指定文本的a标签
+	buySel := fmt.Sprintf(`//a[text()[contains(., '%s')]]`, buyText)
+	orderSel := fmt.Sprintf(`//a[text()[contains(., '%s')]]`, orderText)
+	paySel := fmt.Sprintf(`//input[@value='%s']`, payText)
 
-// 打开网页
-func OpenPage(url string)  error{
-
-	if globalAllocCtx == nil {
-		log.Println("NewRemoteAllocator")
-		globalAllocCtx, _ = chromedp.NewRemoteAllocator(context.Background(), remoteDebugUrl)
-	}
-
-	if globalTaskCtx == nil {
-		log.Println("NewContext")
-		globalTaskCtx, _ = chromedp.NewContext(globalAllocCtx, chromedp.WithLogf(log.Printf))
-	}
-
-	err := chromedp.Run(globalTaskCtx,	chromedp.Navigate(url))
+	err := chromedp.Run(globalTaskCtx,
+		chromedp.WaitVisible(buySel),
+		chromedp.Click(buySel),
+		chromedp.WaitVisible(orderSel),
+		chromedp.Click(orderSel),
+		chromedp.WaitVisible(`input[id=payPassword_rsainput]`),
+		chromedp.SendKeys(`input[id=payPassword_rsainput]`, pwText),
+		chromedp.WaitVisible(paySel),
+		chromedp.Click(paySel),
+	)
 	if err!= nil {
 		log.Println(err)
 		return err
 	}
+
+	log.Println("自动购买  > 完成")
 	return nil
 }
 
-// 点击按钮
+// 按包含文本点击按钮 TEST DEMO
+func ClickBtnByText(text string)  error{
 
+	log.Println("按包含文本搜索并点击A标签  > 文本：" + text)
+
+	// 拼接 xpath 表达式，搜索包含指定文本的a标签
+	sel := fmt.Sprintf(`//a[text()[contains(., '%s')]]`, text)
+
+	err := chromedp.Run(globalTaskCtx,	
+		chromedp.Click(sel),
+	)
+	if err!= nil {
+		log.Println(err)
+		return err
+	}
+
+	log.Println("按包含文本搜索并点击A标签  > 成功")
+	return nil
+}
 
 func Demo()  {
 

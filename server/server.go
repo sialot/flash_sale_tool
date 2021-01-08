@@ -26,12 +26,14 @@ func StartServer(port string){
 	// 欢迎测试页
 	mux.HandleFunc("/api/welcome", welcome)
 
-	// 抓取上下文
-	mux.HandleFunc("/api/geWsUrl", geWsUrl)
+	// 打开商品页
+	mux.HandleFunc("/api/openPage", openPage)
+
+	// 自动秒杀测试
+	mux.HandleFunc("/api/autoBuyTest", autoBuyTest)
 
 	// 点击按钮测试
 	mux.HandleFunc("/api/clickBtnByText", clickBtnByText)
-	
 
 	// 启动服务
 	svr := http.Server{
@@ -66,8 +68,8 @@ func welcome(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(resultJson))
 }
 
-// 抓取调试地址
-func geWsUrl(w http.ResponseWriter, r *http.Request) {
+// 打开商品页
+func openPage(w http.ResponseWriter, r *http.Request) {
 	var responseStr string
 	values := r.URL.Query()
 	goodUrl :=values.Get("goodUrl")
@@ -83,8 +85,8 @@ func geWsUrl(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println("抓取调试地址 > " + goodUrl)
-	wsUrl, err := webdriver.GetWsUrl(goodUrl)
+	log.Println("OPEN_PAGE > " + goodUrl)
+	wsUrl, err := webdriver.OpenPage(goodUrl)
 	if err != nil {
 		responseStr = `{code:-1, msg:'` + err.Error() + `'}`
 
@@ -104,8 +106,87 @@ func geWsUrl(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(responseStr))
 }
 
-// 测试按钮点击
+// 自动购买测试
+func autoBuyTest(w http.ResponseWriter, r *http.Request) {
+
+	// 返回值
+	var responseStr string
+
+	values := r.URL.Query()
+	buyText :=values.Get("buyText")
+	orderText :=values.Get("orderText")
+	pwText :=values.Get("pwText")
+	payText :=values.Get("payText")
+	callback :=values.Get("callback")
+
+	if buyText == "" || orderText == "" || pwText == "" || payText == ""{
+		responseStr = `{code:-1}`
+
+		if callback != "" {
+			responseStr = callback + "(" + responseStr + ")"
+		}
+		w.Write([]byte(responseStr))
+		return
+	}
+
+	log.Println("自动购买测试")
+	err := webdriver.AutoBuyTaobaoV1(buyText, orderText, pwText, payText)
+	if err != nil {
+		responseStr = `{code:-1, msg:'` + err.Error() + `'}`
+
+		if callback != "" {
+			responseStr = callback + "(" + responseStr + ")"
+		}
+		w.Write([]byte(responseStr))
+		return
+	}
+
+	responseStr = `{code:1}`
+
+	if callback != "" {
+		responseStr = callback + "(" + responseStr + ")"
+	}
+
+	w.Write([]byte(responseStr))
+}
+
+// 按名称点击按钮 DEMO
 func clickBtnByText(w http.ResponseWriter, r *http.Request) {
 
+	// 返回值
+	var responseStr string
 
+	values := r.URL.Query()
+	text :=values.Get("text")
+	callback :=values.Get("callback")
+
+	if text == "" {
+		responseStr = `{code:-1}`
+
+		if callback != "" {
+			responseStr = callback + "(" + responseStr + ")"
+		}
+		w.Write([]byte(responseStr))
+		return
+	}
+
+	log.Println("按包含文本点击 a 标签 > " + text)
+	err := webdriver.ClickBtnByText(text)
+	if err != nil {
+		responseStr = `{code:-1, msg:'` + err.Error() + `'}`
+
+		if callback != "" {
+			responseStr = callback + "(" + responseStr + ")"
+		}
+		w.Write([]byte(responseStr))
+		return
+	}
+
+	responseStr = `{code:1}`
+
+	if callback != "" {
+		responseStr = callback + "(" + responseStr + ")"
+	}
+
+	w.Write([]byte(responseStr))
 }
