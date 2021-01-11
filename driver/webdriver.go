@@ -148,7 +148,7 @@ func _initContext() error {
 	// 返回成功
 	if resp.StatusCode == http.StatusOK {
 
-		robots, err := ioutil.ReadAll(resp.Body)
+		jsonStr, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			log.Println("CHROME 远程调试地址 > 获取失败！")
 			log.Println("       请关闭所有正在运行的chrome浏览器,然后重新启动秒杀神器！")
@@ -157,7 +157,7 @@ func _initContext() error {
 
 		// 解析json
 		var pageArr []Page
-		err = jsoniter.Unmarshal(robots, &pageArr)
+		err = jsoniter.Unmarshal(jsonStr, &pageArr)
 		if err != nil {
 			return err
 		}
@@ -170,11 +170,14 @@ func _initContext() error {
 	if RemoteDebugUrl != "" {
 		log.Println("       调试地址：" + RemoteDebugUrl)
 		log.Println("CHROME 远程调试地址 > 获取成功！")
+		log.Println("")
 
 		log.Println("刷新远程调试上下文 > 开始")
 		globalAllocCtx, _ = chromedp.NewRemoteAllocator(context.Background(), RemoteDebugUrl)
 		globalTaskCtx, _ = chromedp.NewContext(globalAllocCtx, chromedp.WithLogf(log.Printf))
 		log.Println("刷新远程调试上下文 > 结束")
+		log.Println("")
+		
 		return nil
 	} else {
 		err := errors.New("远程调试地址 > 获取失败！请确认网址输入正确")
@@ -197,6 +200,7 @@ func OpenPage(goodUrl string) error {
 		return err
 	}
 	log.Println("打开商品页 > 结束")
+	log.Println("")
 	return nil
 }
 
@@ -229,6 +233,7 @@ func AutoBuyTaobaoV1(buyText string, orderText string, pwText string, payText st
 	}
 
 	log.Println("自动购买  > 完成")
+	log.Println("")
 	return nil
 }
 
@@ -265,6 +270,7 @@ func AutoBuyTaobaoV2(buyText string, orderText string, pwText string, payText st
 	}
 
 	log.Println("自动购买  > 完成")
+	log.Println("")
 	return nil
 }
 
@@ -285,6 +291,7 @@ func ClickBtnByText(text string) error {
 	}
 
 	log.Println("按包含文本搜索并点击A标签  > 成功")
+	log.Println("")
 	return nil
 }
 
