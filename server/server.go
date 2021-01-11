@@ -1,11 +1,11 @@
 package server
 
 import (
+	"log"
 	"net/http"
-	"time"
 	"os"
 	"os/signal"
-	"log"
+	"time"
 
 	webdriver "../driver"
 )
@@ -13,7 +13,7 @@ import (
 //
 // Server Start
 //
-func StartServer(port string){
+func StartServer(port string) {
 
 	log.Println("API SERVER > 启动中...")
 
@@ -72,8 +72,8 @@ func welcome(w http.ResponseWriter, r *http.Request) {
 func openPage(w http.ResponseWriter, r *http.Request) {
 	var responseStr string
 	values := r.URL.Query()
-	goodUrl :=values.Get("goodUrl")
-	callback :=values.Get("callback")
+	goodUrl := values.Get("goodUrl")
+	callback := values.Get("callback")
 
 	if goodUrl == "" {
 		responseStr = `{code:-1}`
@@ -97,7 +97,7 @@ func openPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	responseStr = `{code:1, wsUrl:'`+wsUrl+`'}`
+	responseStr = `{code:1, wsUrl:'` + wsUrl + `'}`
 
 	if callback != "" {
 		responseStr = callback + "(" + responseStr + ")"
@@ -106,20 +106,27 @@ func openPage(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(responseStr))
 }
 
-// 自动购买测试
+// 自定义脚本
+func runScript(w http.ResponseWriter, r *http.Request) {
+
+	// TODO
+
+}
+
+// 自动购买测试 DEMO
 func autoBuyTest(w http.ResponseWriter, r *http.Request) {
 
 	// 返回值
 	var responseStr string
 
 	values := r.URL.Query()
-	buyText :=values.Get("buyText")
-	orderText :=values.Get("orderText")
-	pwText :=values.Get("pwText")
-	payText :=values.Get("payText")
-	callback :=values.Get("callback")
+	buyText := values.Get("buyText")
+	orderText := values.Get("orderText")
+	pwText := values.Get("pwText")
+	payText := values.Get("payText")
+	callback := values.Get("callback")
 
-	if buyText == "" || orderText == "" || pwText == "" || payText == ""{
+	if buyText == "" || orderText == "" || pwText == "" || payText == "" {
 		responseStr = `{code:-1}`
 
 		if callback != "" {
@@ -157,8 +164,8 @@ func clickBtnByText(w http.ResponseWriter, r *http.Request) {
 	var responseStr string
 
 	values := r.URL.Query()
-	text :=values.Get("text")
-	callback :=values.Get("callback")
+	text := values.Get("text")
+	callback := values.Get("callback")
 
 	if text == "" {
 		responseStr = `{code:-1}`
