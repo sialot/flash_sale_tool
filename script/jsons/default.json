@@ -6,13 +6,56 @@
             "Action":"WaitVisible",
             "Tag":"A",
             "LocateBy":"ByText",
-            "Param":"立即购买"
+            "LocateParam":"立即购买",
+            "Param":""
         },
         {
             "Action":"Click",
             "Tag":"A",
             "LocateBy":"ByText",
-            "Param":"立即购买"
+            "LocateParam":"立即购买",
+            "Param":""
+        },
+        {
+            "Action":"WaitVisible",
+            "Tag":"A",
+            "LocateBy":"ByText",
+            "LocateParam":"提交订单",
+            "Param":""
+        },
+        {
+            "Action":"Click",
+            "Tag":"A",
+            "LocateBy":"ByText",
+            "LocateParam":"提交订单",
+            "Param":""
+        },
+        {
+            "Action":"WaitVisible",
+            "Tag":"Input",
+            "LocateBy":"ByID",
+            "LocateParam":"payPassword_rsainput",
+            "Param":""
+        },
+        {
+            "Action":"SendKey",
+            "Tag":"Input",
+            "LocateBy":"ByID",
+            "LocateParam":"payPassword_rsainput",
+            "Param":"123456"
+        },{
+            "Action":"WaitVisible",
+            "Tag":"Input",
+            "LocateBy":"ByText",
+            "LocateParam":"确认付款",
+            "Param":""
+        },
+        {
+            "Action":"Click",
+            "Tag":"Input",
+            "LocateBy":"ByText",
+            "LocateParam":"确认付款",
+            "Param":""
         }
     ]
 }
