@@ -64,7 +64,7 @@ func StartServer(port string) {
 // 欢迎
 func welcome(w http.ResponseWriter, r *http.Request) {
 	var resultJson string
-	resultJson += "Welcome!"
+	resultJson += "initCallBack({code:1, wsUrl:'" + webdriver.RemoteDebugUrl + "'})"
 	w.Write([]byte(resultJson))
 }
 
@@ -86,7 +86,7 @@ func openPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Println("OPEN_PAGE > " + goodUrl)
-	wsUrl, err := webdriver.OpenPage(goodUrl)
+	err := webdriver.OpenPage(goodUrl)
 	if err != nil {
 		responseStr = `{code:-1, msg:'` + err.Error() + `'}`
 
@@ -97,7 +97,7 @@ func openPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	responseStr = `{code:1, wsUrl:'` + wsUrl + `'}`
+	responseStr = `{code:1}`
 
 	if callback != "" {
 		responseStr = callback + "(" + responseStr + ")"
@@ -137,7 +137,7 @@ func autoBuyTest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Println("自动购买测试")
-	err := webdriver.AutoBuyTaobaoV1(buyText, orderText, pwText, payText)
+	err := webdriver.AutoBuyTaobaoV2(buyText, orderText, pwText, payText)
 	if err != nil {
 		responseStr = `{code:-1, msg:'` + err.Error() + `'}`
 

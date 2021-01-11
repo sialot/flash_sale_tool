@@ -4,21 +4,37 @@
         <link rel="stylesheet" href="./bootstrap-3.3.7-dist\css\bootstrap.min.css" >
         <script type="javascript" src="./bootstrap-3.3.7-dist\js\bootstrap.min.js" ></script>
         <script>
-            var jspLoadTool = function() {
-                var JSP_SCRIPT;
-                return function(url) {
-                    if(JSP_SCRIPT){
-                        document.getElementsByTagName("head")[0].removeChild(JSP_SCRIPT);
-                    }
-                    JSP_SCRIPT= document.createElement("script");
-                    JSP_SCRIPT.type = "text/javascript";
-                    JSP_SCRIPT.charset = "UTF-8";
-                    JSP_SCRIPT.src = url + "&random4cache=" + Math.random();
-                    document.getElementsByTagName("head")[0].appendChild(JSP_SCRIPT);
-                };
-            }();
+        var jspLoadTool = function() {
+            var JSP_SCRIPT;
+            return function(url) {
+                if(JSP_SCRIPT){
+                    document.getElementsByTagName("head")[0].removeChild(JSP_SCRIPT);
+                }
+                JSP_SCRIPT= document.createElement("script");
+                JSP_SCRIPT.type = "text/javascript";
+                JSP_SCRIPT.charset = "UTF-8";
+                JSP_SCRIPT.src = url + "&random4cache=" + Math.random();
+                document.getElementsByTagName("head")[0].appendChild(JSP_SCRIPT);
+            };
+        }();
 
+        // 初始化
+        function init(){
+            var url = "http://localhost:4000/api/welcome?"
+            jspLoadTool(url)
+        }
+        
+        // 初始化回调
+        function initCallBack(res){
+
+            // 显示调试信息
+            document.getElementById("sampWsUrl").innerHTML = "调试地址 > " + res.wsUrl
+
+            // TODO 显示脚本列表
             
+        }
+   
+        // 打开商品页
         function openPage(){
     
             var goodUrl = document.getElementById("inputGoodUrl").value;
@@ -37,11 +53,10 @@
             console.log(res)
             if (res.code == -1) {
                 alert(res.msg)
-            }else{
-                document.getElementById("sampWsUrl").innerHTML = "调试地址 > " + res.wsUrl
             }
         }
 
+        // test DEMO
         function autoBuyTaobao(){
             var inputBuyText = document.getElementById("inputBuyText").value;
             var inputOrderText = document.getElementById("inputOrderText").value;
@@ -94,10 +109,10 @@
         }
         </script>
     </header>
-    <body>
+    <body onload="init()">
         <div class="container-fluid col-lg-6">
                 <h3>大福酱酱的秒杀神器!</h3>
-
+                
             <!-- 第1步 -->
             <div class="panel panel-primary">               
                 <div class="panel-heading">

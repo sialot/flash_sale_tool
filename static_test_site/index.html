@@ -15,10 +15,17 @@ div{border: 1px #000000 solid;text-align:left;vertical-align: middle;line-height
      -webkit-text-fill-color: transparent;
 	 border:1px solid #0f0
 }; 
+
+
 </style>
+<script>
+setTimeout(function(){
+     document.getElementById("buy").style = "visibility: visible;"
+}, 5000)     
+</script>
 </head>
 <body style="" >
 	<h1>商品详情<h1/>	
-	<a href="./order.html">立即购买</a>
+	<a id="buy" href="./order.html" >立即购买</a>
 </body>
 </html>

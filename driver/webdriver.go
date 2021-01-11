@@ -18,8 +18,8 @@ import (
 	jsoniter "github.com/json-iterator/go"
 )
 
-var remoteDebugPort string
-var remoteDebugUrl string
+var RemoteDebugPort string = ""
+var RemoteDebugUrl string = ""
 var globalAllocCtx context.Context = nil
 var globalTaskCtx context.Context = nil
 
@@ -43,6 +43,13 @@ func Init() error {
 	if err != nil {
 		return err
 	}
+
+	// 刷新上下文
+	err = _initContext()
+	if err != nil {
+		return err
+	}
+	
 	return nil
 }
 
@@ -61,13 +68,13 @@ func _startChrome() error {
 	UIUrl := "http://localhost:" + port + "/"
 
 	// 获取远程调试端口
-	remoteDebugPort, err = config.SysConfig.Get("chrome.remote_debugging_port")
+	RemoteDebugPort, err = config.SysConfig.Get("chrome.remote_debugging_port")
 	if err != nil {
 		log.Println("配置加载失败\"chrome.remote_debugging_port\"")
 		return err
 	}
 
-	log.Println("       远程调试端口：" + remoteDebugPort)
+	log.Println("       远程调试端口：" + RemoteDebugPort)
 
 	// 判断当前操作系统
 	switch os := runtime.GOOS; os {
@@ -78,7 +85,7 @@ func _startChrome() error {
 
 		// 拼接启动命令
 		// /usr/bin/open -a Google\ Chrome --args --remote-debugging-port=9222
-		cmd := exec.Command("/usr/bin/open", "-a", "Google Chrome", "--args", "--remote-debugging-port="+remoteDebugPort, UIUrl)
+		cmd := exec.Command("/usr/bin/open", "-a", "Google Chrome", "--args", "--remote-debugging-port="+RemoteDebugPort, UIUrl)
 		err = cmd.Run()
 		if err != nil {
 
@@ -99,7 +106,7 @@ func _startChrome() error {
 
 		// 拼接启动命令
 		// cmd.exe /c start "" "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe" --new-window --remote-debugging-port=9222 http://localhost:9222/json
-		cmd := exec.Command("cmd.exe", "/c", "start", "", chromePath, "--remote-debugging-port="+remoteDebugPort, UIUrl)
+		cmd := exec.Command("cmd.exe", "/c", "start", "", chromePath, "--remote-debugging-port="+RemoteDebugPort, UIUrl)
 		err = cmd.Run()
 		if err != nil {
 
@@ -119,23 +126,22 @@ func _startChrome() error {
 	return nil
 }
 
-// 打开商品页
-func OpenPage(goodUrl string) (string, error) {
+// 初始化上下文
+func _initContext() error {
 
 	log.Println("CHROME 远程调试地址 > 获取中...")
-	log.Println("       请求地址：" + "http://localhost:" + remoteDebugPort + "/json")
-	log.Println("       商品页地址：" + goodUrl)
+	log.Println("       请求地址：" + "http://localhost:" + RemoteDebugPort + "/json")
 
-	remoteDebugUrl = ""
+	RemoteDebugUrl = ""
 
 	// 抓取json数据
-	resp, err := http.Get("http://localhost:" + remoteDebugPort + "/json")
+	resp, err := http.Get("http://localhost:" + RemoteDebugPort + "/json")
 	if err != nil {
 
 		// 命令执行失败
 		log.Println("CHROME 远程调试地址 > 获取失败！")
 		log.Println("       请关闭所有正在运行的chrome浏览器,然后重新启动秒杀神器！")
-		return "", err
+		return err
 	}
 	defer resp.Body.Close()
 
@@ -146,48 +152,52 @@ func OpenPage(goodUrl string) (string, error) {
 		if err != nil {
 			log.Println("CHROME 远程调试地址 > 获取失败！")
 			log.Println("       请关闭所有正在运行的chrome浏览器,然后重新启动秒杀神器！")
-			return "", err
+			return err
 		}
 
 		// 解析json
 		var pageArr []Page
 		err = jsoniter.Unmarshal(robots, &pageArr)
 		if err != nil {
-			return "", err
+			return err
 		}
 
 		if len(pageArr) > 0 {
-			remoteDebugUrl = pageArr[0].WebSocketDebuggerUrl
+			RemoteDebugUrl = pageArr[0].WebSocketDebuggerUrl
 		}
 	}
 
-	if remoteDebugUrl != "" {
-		log.Println("       调试地址：" + remoteDebugUrl)
+	if RemoteDebugUrl != "" {
+		log.Println("       调试地址：" + RemoteDebugUrl)
 		log.Println("CHROME 远程调试地址 > 获取成功！")
 
 		log.Println("刷新远程调试上下文 > 开始")
-		globalAllocCtx, _ = chromedp.NewRemoteAllocator(context.Background(), remoteDebugUrl)
+		globalAllocCtx, _ = chromedp.NewRemoteAllocator(context.Background(), RemoteDebugUrl)
 		globalTaskCtx, _ = chromedp.NewContext(globalAllocCtx, chromedp.WithLogf(log.Printf))
 		log.Println("刷新远程调试上下文 > 结束")
-
-		log.Println("打开商品页 > 开始")
-		err := chromedp.Run(globalTaskCtx,
-			chromedp.Navigate(goodUrl),
-		)
-		if err != nil {
-			log.Println(err)
-			log.Println("打开商品页 > 失败")
-			return "", err
-		}
-		log.Println("打开商品页 > 结束")
-
-		return remoteDebugUrl, nil
+		return nil
 	} else {
 		err := errors.New("远程调试地址 > 获取失败！请确认网址输入正确")
 		log.Println("CHROME 远程调试地址 > 获取失败！")
 		log.Println("       请确认网址输入正确")
-		return "", err
+		return err
 	}
+}
+
+// 打开商品页
+func OpenPage(goodUrl string) error {
+
+	log.Println("打开商品页 > 开始")
+	err := chromedp.Run(globalTaskCtx,
+		chromedp.Navigate(goodUrl),
+	)
+	if err != nil {
+		log.Println(err)
+		log.Println("打开商品页 > 失败")
+		return err
+	}
+	log.Println("打开商品页 > 结束")
+	return nil
 }
 
 // 淘宝自动秒杀 TEST DEMO
@@ -213,6 +223,42 @@ func AutoBuyTaobaoV1(buyText string, orderText string, pwText string, payText st
 		chromedp.WaitVisible(paySel),
 		chromedp.Click(paySel),
 	)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	log.Println("自动购买  > 完成")
+	return nil
+}
+
+// 淘宝自动秒杀 TEST DEMO
+func AutoBuyTaobaoV2(buyText string, orderText string, pwText string, payText string) error {
+
+	log.Println("自动购买  > 购买按钮：" + buyText)
+	log.Println("           提交按钮：" + orderText)
+	log.Println("           支付密码：" + pwText)
+	log.Println("           付款按钮：" + payText)
+
+	// 拼接 xpath 表达式，搜索包含指定文本的a标签
+	buySel := fmt.Sprintf(`//a[text()[contains(., '%s')]]`, buyText)
+	orderSel := fmt.Sprintf(`//a[text()[contains(., '%s')]]`, orderText)
+	paySel := fmt.Sprintf(`//input[@value='%s']`, payText)
+
+	var err error
+
+	var actions []chromedp.Action
+
+	actions = append(actions, chromedp.WaitVisible(buySel))
+	actions = append(actions, chromedp.Click(buySel))
+	actions = append(actions, chromedp.WaitVisible(orderSel))
+	actions = append(actions, chromedp.Click(orderSel))
+	actions = append(actions, chromedp.WaitVisible(`input[id=payPassword_rsainput]`))
+	actions = append(actions, chromedp.SendKeys(`input[id=payPassword_rsainput]`, pwText))
+	actions = append(actions, chromedp.WaitVisible(paySel))
+	actions = append(actions, chromedp.Click(paySel))
+
+	err = chromedp.Run(globalTaskCtx, actions...)
 	if err != nil {
 		log.Println(err)
 		return err
