@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"runtime"
 	"fmt"
 //	"github.com/chromedp/cdproto/cdp"
 	"github.com/chromedp/chromedp"
@@ -18,7 +19,6 @@ var remoteDebugPort string
 var remoteDebugUrl string
 var globalAllocCtx context.Context = nil
 var globalTaskCtx context.Context = nil
-var UIUrl string = ""
 
 // chrome 调试信息对象
 type Page struct {
@@ -46,26 +46,77 @@ func Init() error{
 // 启动浏览器
 func _startChrome() error{
 
-	chromePath, _:= config.SysConfig.Get("chrome.path")
-	remoteDebugPort, _ = config.SysConfig.Get("chrome.remote_debugging_port")
-	port, _ := config.SysConfig.Get("server.port")
-
 	log.Println("CHROME 浏览器 > 启动中...")
-	log.Println("       可执行文件位置：" + chromePath)
-	log.Println("       远程调试端口：" + remoteDebugPort)
+	var err error
 
-	UIUrl = "http://localhost:" + port + "/"
-
-	// 拼接启动命令
-	// cmd.exe /c start "" "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe" --new-window --remote-debugging-port=9222 http://localhost:9222/json
-	cmd := exec.Command("cmd.exe", "/c", "start","", chromePath, "--remote-debugging-port=" + remoteDebugPort, UIUrl)
-	err := cmd.Run()
+	// 抢单UI网址
+	port, err := config.SysConfig.Get("server.port")
 	if err != nil {
-
-		// 命令执行失败
-		log.Println("CHROME 浏览器 > 启动失败！")
+		log.Println("配置加载失败\"chrome.remote_debugging_port\"")
 		return err
 	}
+	UIUrl := "http://localhost:" + port + "/"
+
+	// 获取远程调试端口
+	remoteDebugPort, err = config.SysConfig.Get("chrome.remote_debugging_port")
+	if err != nil {
+		log.Println("配置加载失败\"chrome.remote_debugging_port\"")
+		return err
+	}
+
+	log.Println("       远程调试端口：" + remoteDebugPort)
+
+	// 判断当前操作系统
+	switch os := runtime.GOOS; os {
+
+	// OS X	
+    case "darwin":
+		log.Println("       当前系统：mac os x")
+		chromePath, err:= config.SysConfig.Get("chrome.path.macos")
+		if err != nil {
+			log.Println("配置加载失败\"chrome.path.macos\"")
+			return err
+		}
+
+		log.Println("       可执行文件位置：" + chromePath)
+
+		// 拼接启动命令
+		// /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome  ~/Desktop/test.mp4 --remote-debugging-port=9222 http://localhost:9222/json
+		cmd := exec.Command( chromePath, "--remote-debugging-port=" + remoteDebugPort, UIUrl)
+		err = cmd.Run()
+		if err != nil {
+	
+			// 命令执行失败
+			log.Println("CHROME 浏览器 > 启动失败！")
+			return err
+		}
+
+	// Windows
+	case "windows":
+		log.Println("       当前系统：windows")
+		chromePath, err:= config.SysConfig.Get("chrome.path.windows")
+		if err != nil {
+			log.Println("配置加载失败\"chrome.path.windows\"")
+			return err
+		}
+		log.Println("       可执行文件位置：" + chromePath)
+		
+		// 拼接启动命令
+		// cmd.exe /c start "" "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe" --new-window --remote-debugging-port=9222 http://localhost:9222/json
+		cmd := exec.Command("cmd.exe", "/c", "start","", chromePath, "--remote-debugging-port=" + remoteDebugPort, UIUrl)
+		err = cmd.Run()
+		if err != nil {
+	
+			// 命令执行失败
+			log.Println("CHROME 浏览器 > 启动失败！")
+			return err
+		}
+
+    default:
+        fmt.Println("不支持当前操作系统")
+		err := errors.New("不支持当前操作系统")
+		return err
+    }
 
 	log.Println("CHROME 浏览器 > 启动成功！")
 	log.Println("")
