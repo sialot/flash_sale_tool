@@ -6,6 +6,7 @@ import (
 	config "./config"
 	webdriver "./driver"
 	server "./server"
+	script "./script"
 	"time"
 )
 
@@ -21,18 +22,11 @@ func main() {
 	log.Println("==========================")
 	log.Println("")
 
-	// 启动Chrome
-
- 	err := webdriver.Init()
-	if err != nil {
-		panic(err)
-	}
-	
 	// 启动本地API服务
 	port, _ := config.SysConfig.Get("server.port")
 	go func() {
 		for {
-			time.Sleep(200 * time.Millisecond)
+			time.Sleep(100 * time.Millisecond)
 			resp, err := http.Get("http://localhost:" + port + "/")
 			if err != nil {
 				continue
@@ -43,11 +37,18 @@ func main() {
 			}
 			break
 		}
+
+		// 加载脚本
+		script.LoadScripts()
+
+		// 初始化webdriver
+		err := webdriver.Init()
+		if err != nil {
+			panic(err)
+		}
+
 		log.Println("API SERVER > 启动成功!")
 		log.Println("")
-		// log.Println("跳转大福酱酱的抢单神器~")
-		// webdriver.ShowWebUI(port)
-		// log.Println("跳转成功！")
 	}()
 
 	server.StartServer(port)
