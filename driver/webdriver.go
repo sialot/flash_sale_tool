@@ -1,18 +1,21 @@
 package webdriver
+
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"runtime"
-	"fmt"
-//	"github.com/chromedp/cdproto/cdp"
-	"github.com/chromedp/chromedp"
-	"os/exec"
+
+	//	"github.com/chromedp/cdproto/cdp"
 	"errors"
-	jsoniter "github.com/json-iterator/go"
+	"os/exec"
+
 	config "../config"
+	"github.com/chromedp/chromedp"
+	jsoniter "github.com/json-iterator/go"
 )
 
 var remoteDebugPort string
@@ -22,19 +25,19 @@ var globalTaskCtx context.Context = nil
 
 // chrome 调试信息对象
 type Page struct {
-    Description  string
-    DevtoolsFrontendUrl   string
-    Id string
-    Title   string
-    PageType string `json:"type"`
-	Url  string
+	Description          string
+	DevtoolsFrontendUrl  string
+	Id                   string
+	Title                string
+	PageType             string `json:"type"`
+	Url                  string
 	WebSocketDebuggerUrl string
 }
 
 // 初始化
-func Init() error{
+func Init() error {
 	var err error
-	
+
 	// 启动浏览器
 	err = _startChrome()
 	if err != nil {
@@ -44,7 +47,7 @@ func Init() error{
 }
 
 // 启动浏览器
-func _startChrome() error{
+func _startChrome() error {
 
 	log.Println("CHROME 浏览器 > 启动中...")
 	var err error
@@ -69,23 +72,16 @@ func _startChrome() error{
 	// 判断当前操作系统
 	switch os := runtime.GOOS; os {
 
-	// OS X	
-    case "darwin":
+	// OS X
+	case "darwin":
 		log.Println("       当前系统：mac os x")
-		chromePath, err:= config.SysConfig.Get("chrome.path.macos")
-		if err != nil {
-			log.Println("配置加载失败\"chrome.path.macos\"")
-			return err
-		}
-
-		log.Println("       可执行文件位置：" + chromePath)
 
 		// 拼接启动命令
-		// /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome  ~/Desktop/test.mp4 --remote-debugging-port=9222 http://localhost:9222/json
-		cmd := exec.Command( chromePath, "--remote-debugging-port=" + remoteDebugPort, UIUrl)
+		// /usr/bin/open -a Google\ Chrome --args --remote-debugging-port=9222
+		cmd := exec.Command("/usr/bin/open", "-a", "Google Chrome", "--args", "--remote-debugging-port="+remoteDebugPort, UIUrl)
 		err = cmd.Run()
 		if err != nil {
-	
+
 			// 命令执行失败
 			log.Println("CHROME 浏览器 > 启动失败！")
 			return err
@@ -94,29 +90,29 @@ func _startChrome() error{
 	// Windows
 	case "windows":
 		log.Println("       当前系统：windows")
-		chromePath, err:= config.SysConfig.Get("chrome.path.windows")
+		chromePath, err := config.SysConfig.Get("chrome.path.windows")
 		if err != nil {
 			log.Println("配置加载失败\"chrome.path.windows\"")
 			return err
 		}
 		log.Println("       可执行文件位置：" + chromePath)
-		
+
 		// 拼接启动命令
 		// cmd.exe /c start "" "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe" --new-window --remote-debugging-port=9222 http://localhost:9222/json
-		cmd := exec.Command("cmd.exe", "/c", "start","", chromePath, "--remote-debugging-port=" + remoteDebugPort, UIUrl)
+		cmd := exec.Command("cmd.exe", "/c", "start", "", chromePath, "--remote-debugging-port="+remoteDebugPort, UIUrl)
 		err = cmd.Run()
 		if err != nil {
-	
+
 			// 命令执行失败
 			log.Println("CHROME 浏览器 > 启动失败！")
 			return err
 		}
 
-    default:
-        fmt.Println("不支持当前操作系统")
+	default:
+		fmt.Println("不支持当前操作系统")
 		err := errors.New("不支持当前操作系统")
 		return err
-    }
+	}
 
 	log.Println("CHROME 浏览器 > 启动成功！")
 	log.Println("")
@@ -124,7 +120,7 @@ func _startChrome() error{
 }
 
 // 打开商品页
-func OpenPage(goodUrl string) (string, error){
+func OpenPage(goodUrl string) (string, error) {
 
 	log.Println("CHROME 远程调试地址 > 获取中...")
 	log.Println("       请求地址：" + "http://localhost:" + remoteDebugPort + "/json")
@@ -176,12 +172,12 @@ func OpenPage(goodUrl string) (string, error){
 
 		log.Println("打开商品页 > 开始")
 		err := chromedp.Run(globalTaskCtx,
-			chromedp.Navigate(goodUrl),	
+			chromedp.Navigate(goodUrl),
 		)
-		if err!= nil {
+		if err != nil {
 			log.Println(err)
 			log.Println("打开商品页 > 失败")
-			return "",err
+			return "", err
 		}
 		log.Println("打开商品页 > 结束")
 
@@ -195,7 +191,7 @@ func OpenPage(goodUrl string) (string, error){
 }
 
 // 淘宝自动秒杀 TEST DEMO
-func AutoBuyTaobaoV1(buyText string, orderText string, pwText string, payText string)  error{
+func AutoBuyTaobaoV1(buyText string, orderText string, pwText string, payText string) error {
 
 	log.Println("自动购买  > 购买按钮：" + buyText)
 	log.Println("           提交按钮：" + orderText)
@@ -217,7 +213,7 @@ func AutoBuyTaobaoV1(buyText string, orderText string, pwText string, payText st
 		chromedp.WaitVisible(paySel),
 		chromedp.Click(paySel),
 	)
-	if err!= nil {
+	if err != nil {
 		log.Println(err)
 		return err
 	}
@@ -227,17 +223,17 @@ func AutoBuyTaobaoV1(buyText string, orderText string, pwText string, payText st
 }
 
 // 按包含文本点击按钮 TEST DEMO
-func ClickBtnByText(text string)  error{
+func ClickBtnByText(text string) error {
 
 	log.Println("按包含文本搜索并点击A标签  > 文本：" + text)
 
 	// 拼接 xpath 表达式，搜索包含指定文本的a标签
 	sel := fmt.Sprintf(`//a[text()[contains(., '%s')]]`, text)
 
-	err := chromedp.Run(globalTaskCtx,	
+	err := chromedp.Run(globalTaskCtx,
 		chromedp.Click(sel),
 	)
-	if err!= nil {
+	if err != nil {
 		log.Println(err)
 		return err
 	}
@@ -246,7 +242,7 @@ func ClickBtnByText(text string)  error{
 	return nil
 }
 
-func Demo()  {
+func Demo() {
 
 	dir, err := ioutil.TempDir("", "chromedp-example")
 	if err != nil {
@@ -255,32 +251,31 @@ func Demo()  {
 	defer os.RemoveAll(dir)
 
 	// 使用普通模式打开浏览器
- 	// options := []chromedp.ExecAllocatorOption{
-    //     chromedp.Flag("headless", false),
-    //     chromedp.Flag("hide-scrollbars", false),
-    //     chromedp.Flag("mute-audio", false),
-    //     chromedp.UserAgent(`Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36`),
-    // }
- 
+	// options := []chromedp.ExecAllocatorOption{
+	//     chromedp.Flag("headless", false),
+	//     chromedp.Flag("hide-scrollbars", false),
+	//     chromedp.Flag("mute-audio", false),
+	//     chromedp.UserAgent(`Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36`),
+	// }
+
 	// options = append(chromedp.DefaultExecAllocatorOptions[:],options...)
-	
-//	allocCtx, cancel := chromedp.NewExecAllocator(context.Background(), options...)
+
+	//	allocCtx, cancel := chromedp.NewExecAllocator(context.Background(), options...)
 
 	allocCtx, _ := chromedp.NewRemoteAllocator(context.Background(), "ws://localhost:9021/devtools/page/68036593BF20DDADACFD11E584ACA592")
 
 	//defer cancel()
-	
+
 	// also set up a custom logger
 	taskCtx, _ := chromedp.NewContext(allocCtx, chromedp.WithLogf(log.Printf))
 	//defer cancel()
 
 	chromedp.Run(taskCtx,
 		//打开网页
-		chromedp.Navigate(`http://www.baidu.com`), 
+		chromedp.Navigate(`http://www.baidu.com`),
 
-		//chromedp.Sleep(100*time.Second),
+	//chromedp.Sleep(100*time.Second),
 
-		)
-	
-		
+	)
+
 }
