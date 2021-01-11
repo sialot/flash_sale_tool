@@ -21,7 +21,8 @@ type ActionType string
 const (
 	_ ActionType = ""
 	WaitVisible = "WaitVisible"
-	ClickByID = "ClickByID"
+	Click = "Click"
+	SendKey = "SendKey"
 )
 
 // 定位方式
@@ -37,6 +38,7 @@ type Action struct {
 	Action   ActionType
 	Tag      TagType
 	LocateBy string
+	LocateParam string
 	Param  string
 }
 
