@@ -1,0 +1,18 @@
+{
+    "ID":"defaultTask2",
+    "Name":"按钮测试 v1",
+    "Actions":[
+        {
+            "Action":"WaitVisible",
+            "Tag":"A",
+            "LocateBy":"ByText",
+            "Param":""
+        },
+        {
+            "Action":"Click",
+            "Tag":"A",
+            "LocateBy":"ByText",
+            "Param":""
+        }
+    ]
+}

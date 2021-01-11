@@ -3,44 +3,41 @@ package script
 import (
 	"log"
 	"io/ioutil"
+	"strconv"
+	// "github.com/go-basic/uuid"
+	jsoniter "github.com/json-iterator/go"
 )
 
-
 // 标签类型
-type TagType int
-
+type TagType string
 const (
-	_ TagType = iota
-	A
-	Input
+	_ TagType = ""
+	A = "A"
+	Input = "Input"
 )
 
 // 操作类型
-type ActionType int
-
+type ActionType string
 const (
-	_ ActionType = iota
-	WaitVisible
-	ClickByID
+	_ ActionType = ""
+	WaitVisible = "WaitVisible"
+	ClickByID = "ClickByID"
 )
 
 // 定位方式
-type LocateType int
-
+type LocateType string
 const (
-	_ ActionType = iota
-	ByText
-	ByID
+	_ ActionType = ""
+	ByText = "ByText"
+	ByID = "ByID"
 )
 
 // 动作
 type Action struct {
-	Tag      TagType
 	Action   ActionType
-	LocateBy int
-	DomText  string
-	DomValue string
-	DomID    string
+	Tag      TagType
+	LocateBy string
+	Param  string
 }
 
 // 任务构造体
@@ -50,38 +47,62 @@ type Task struct {
 	Actions []Action // 动作列表
 }
 
+var GlobalTasks []Task
+
 func LoadScripts() {
-	log.Println("加载抢单脚本  > ...")
+	log.Println("加载抢单脚本 > ...")
 
+	var pathName string = "./script/jsons/"
 
-	
-
-
-
-
-	err := _getAllFile("./script/jsons/")
+	rd, err := ioutil.ReadDir(pathName)
 	if err != nil {
 		log.Println(err.Error())
+		log.Println("加载抢单脚本 > 失败！")
 		panic(err)
 	}
-	log.Println("加载抢单脚本  > 结束")
-}
 
-func _getAllFile(pathname string) error {
-    rd, err := ioutil.ReadDir(pathname)
     for _, fi := range rd {
         if fi.IsDir() {
-            log.Println("忽略" + pathname+"\\"+fi.Name())
+			continue
         } else {
-            log.Println(fi.Name())
+			_loadJson(pathName + fi.Name())
         }
-    }
-    return err
+	}
+
+	log.Println("加载抢单脚本 > 结束， 成功加载 " + strconv.Itoa(len(GlobalTasks)) + "个脚本" )
+	log.Println("")
 }
 
-func _loadJson(path string) {
-
+// 获取任务列表json字符串
+func GetTaskListJson() (string, error) {
+	
+	bjson,err := jsoniter.Marshal(GlobalTasks)
+	if err!=nil {
+		return "", err
+	}
+	
+	return string(bjson), nil
 }
+
+func _loadJson(path string) error {
+	var task Task
+	b, err := ioutil.ReadFile(path)
+	if err != nil {
+		log.Println("加载文件：" + path + "读取出错!")
+		return err
+	}
+	err = jsoniter.Unmarshal(b, &task)
+	if err != nil {
+		log.Println("加载文件：" + path + "json解析出错!")
+		return err
+	}
+
+	GlobalTasks = append(GlobalTasks, task)
+
+	log.Println("加载文件：" + path + " 成功！")
+	return nil
+}
+
 func _writeJson(path string, tsk Task){
 
 }

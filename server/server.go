@@ -8,6 +8,7 @@ import (
 	"time"
 
 	webdriver "../driver"
+	script "../script"
 )
 
 //
@@ -25,6 +26,9 @@ func StartServer(port string) {
 
 	// 欢迎测试页
 	mux.HandleFunc("/api/welcome", welcome)
+
+	// 获取任务列表
+	mux.HandleFunc("/api/getTaskList", getTaskList)
 
 	// 打开商品页
 	mux.HandleFunc("/api/openPage", openPage)
@@ -64,8 +68,40 @@ func StartServer(port string) {
 // 欢迎
 func welcome(w http.ResponseWriter, r *http.Request) {
 	var resultJson string
-	resultJson += "initCallBack({code:1, wsUrl:'" + webdriver.RemoteDebugUrl + "'})"
+
+	taskListJson, err := script.GetTaskListJson()
+	if err != nil {
+		taskListJson = "[]"
+	}
+
+	resultJson += "initCallBack({code:1, wsUrl:'" + webdriver.RemoteDebugUrl + 
+		"',data:" + taskListJson + "})"
 	w.Write([]byte(resultJson))
+}
+
+// 获取任务列表
+func getTaskList(w http.ResponseWriter, r *http.Request) {
+	var responseStr string
+	values := r.URL.Query()
+	callback := values.Get("callback")
+
+	taskListJson, err := script.GetTaskListJson()
+	if err != nil {
+		responseStr = `{code:-1, msg:'` + err.Error() + `'}`
+
+		if callback != "" {
+			responseStr = callback + "(" + responseStr + ")"
+		}
+		w.Write([]byte(responseStr))
+		return
+	}
+	
+	responseStr = `{code:1,data:` + taskListJson + `}`
+	if callback != "" {
+		responseStr = callback + "(" + responseStr + ")"
+	}
+
+	w.Write([]byte(responseStr))
 }
 
 // 打开商品页
