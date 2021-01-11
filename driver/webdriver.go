@@ -161,15 +161,7 @@ func OpenPage(goodUrl string) (string, error){
 		}
 
 		if len(pageArr) > 0 {
-
-			// 遍历找到调试信息
-			for i:=0;i<len(pageArr);i++ {
-				
-				if pageArr[i].Url == UIUrl {
-					remoteDebugUrl = pageArr[i].WebSocketDebuggerUrl
-					break
-				}
-			}
+			remoteDebugUrl = pageArr[0].WebSocketDebuggerUrl
 		}
 	}
 
