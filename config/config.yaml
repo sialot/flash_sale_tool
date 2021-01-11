@@ -3,7 +3,6 @@ server:
 chrome:
   path:
     windows: C:\Program Files (x86)\Google\Chrome\Application\chrome.exe
-    macos: /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome
   remote_debugging_port: 9021
 log:
   syslog:
