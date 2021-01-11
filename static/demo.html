@@ -1,0 +1,210 @@
+<html>
+    <header>
+        <title>大福酱酱的秒杀神器!</title>
+        <link rel="stylesheet" href="./bootstrap-3.3.7-dist\css\bootstrap.min.css" >
+        <script type="javascript" src="./bootstrap-3.3.7-dist\js\bootstrap.min.js" ></script>
+        <script>
+
+        var GlobalTaskList;
+        var jspLoadTool = function() {
+            var JSP_SCRIPT;
+            return function(url) {
+                if(JSP_SCRIPT){
+                    document.getElementsByTagName("head")[0].removeChild(JSP_SCRIPT);
+                }
+                JSP_SCRIPT= document.createElement("script");
+                JSP_SCRIPT.type = "text/javascript";
+                JSP_SCRIPT.charset = "UTF-8";
+                JSP_SCRIPT.src = url + "&random4cache=" + Math.random();
+                document.getElementsByTagName("head")[0].appendChild(JSP_SCRIPT);
+            };
+        }();
+
+        // 初始化
+        function init(){
+            var url = "http://localhost:4000/api/welcome?"
+            jspLoadTool(url)
+        }
+        
+        // 初始化回调
+        function initCallBack(res){
+
+            // 显示调试信息
+            document.getElementById("sampWsUrl").innerHTML = "调试地址 > " + res.wsUrl
+
+            // 显示脚本列表
+            GlobalTaskList = res.data
+            showTasks()
+        }
+   
+        // 显示界面
+        function showTasks(){
+
+            for(var i=0; i<GlobalTaskList.length; i++){
+                var task = GlobalTaskList[i];
+                console.log(JSON.stringify(task))
+
+
+
+
+
+            }
+        }
+
+
+
+
+
+
+        // 打开商品页
+        function openPage(){
+    
+            var goodUrl = document.getElementById("inputGoodUrl").value;
+            console.log(goodUrl)
+            goodUrl=encodeURIComponent(goodUrl)
+            if(goodUrl == ""){
+                alert("商品地址不能为空！")
+                return
+            }
+
+            var url = "http://localhost:4000/api/openPage?goodUrl=" + goodUrl + "&callback=openCallback"
+            jspLoadTool(url)
+        }
+
+        function openCallback(res){
+            console.log(res)
+            if (res.code == -1) {
+                alert(res.msg)
+            }
+        }
+
+        // test DEMO
+        function autoBuyTaobao(){
+            var inputBuyText = document.getElementById("inputBuyText").value;
+            var inputOrderText = document.getElementById("inputOrderText").value;
+            var inputPwText = document.getElementById("inputPwText").value;
+            var inputPayText = document.getElementById("inputPayText").value;
+
+            inputBuyText=encodeURIComponent(inputBuyText)
+            inputOrderText=encodeURIComponent(inputOrderText)
+            inputPwText=encodeURIComponent(inputPwText)
+            inputPayText=encodeURIComponent(inputPayText)
+
+            if(inputBuyText == "" || inputOrderText == ""
+                || inputPwText == "" || inputPayText == ""){
+                alert("必填项不能为空！")
+                return
+            }
+
+            var url = "http://localhost:4000/api/autoBuyTest?buyText=" + inputBuyText + "&orderText=" + inputOrderText
+                + "&pwText=" + inputPwText + "&payText=" + inputPayText + "&callback=autoBuyCallback"
+
+            console.log(url)
+            jspLoadTool(url)
+        }
+
+        function autoBuyCallback(res){
+            console.log(res)
+            if (res.code == -1) {
+                alert(res.msg)
+            }
+        }
+
+        function test(){
+            var text = document.getElementById("inputBtnText").value;
+            console.log(text)
+            text=encodeURIComponent(text)
+            if(text == ""){
+                alert("文本不能为空！")
+                return
+            }
+
+            var url = "http://localhost:4000/api/clickBtnByText?text=" + text + "&callback=clickCallback"
+            jspLoadTool(url)
+        }
+        
+        function clickCallback(res){
+            console.log(res)
+            if (res.code == -1) {
+                alert(res.msg)
+            }
+        }
+        </script>
+    </header>
+    <body onload="init()">
+        <div class="container-fluid col-lg-6">
+                <h3>大福酱酱的秒杀神器!</h3>
+                
+            <!-- 第1步 -->
+            <div class="panel panel-primary">               
+                <div class="panel-heading">
+                    <h3 class="panel-title">Step 1</h3>
+                </div>
+                
+                <div class="panel-body">
+                    <p>输入商品地址，点击“打开”</p>          
+                    <div class="input-group col-lg-12">
+                        <input id="inputGoodUrl" type="text" class="form-control" placeholder="输入商品页面地址">
+                        <span class="input-group-btn">
+                        <button class="btn btn-default" onclick="openPage()" type="button">打开</button>
+                        </span>
+                    </div>
+                    <p id="sampWsUrl"></p>
+                    <p style="color:red">继续操作前确认以下事情：1、在 “自动打开” 的商品详情页，提前登录号淘宝账号</p>
+                    <p style="color:red">2、提前选好购买产品的规格</p>
+                    <p style="color:red">3、设置好默认收货地址</p>                                 
+                    <p style="color:red">4、默认支付方式有足够余额购买商品</p>
+                    <p style="color:red">5、让之前  “自动打开”  浏览器标签页，保持在商品秒杀页面</p>          
+                </div>
+            </div>
+
+            <!-- 第3步 -->
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Step 3   淘宝秒杀 v1.0</h3>
+                </div>
+                
+                <div class="panel-body">                  
+                    
+                    1、输入抢购按钮包含的中文
+                    <div class="input-group col-lg-12">
+                        <input id="inputBuyText" type="text" class="form-control" value="立即购买" placeholder="输入抢购按钮包含的中文">
+                    </div>  
+                    2、输入订单提交页面按钮包含的中文     
+                    <div class="input-group col-lg-12">
+                        <input id="inputOrderText" type="text" class="form-control" value="提交订单" placeholder="输入订单提交页面按钮包含的中文">
+                    </div> 
+                    3、输入支付密码
+                    <div class="input-group col-lg-12">
+                        <input id="inputPwText" type="text" class="form-control" value="123456" placeholder="输入支付密码">
+                    </div>
+                    4、输入支付提交按钮包含的中文
+                    <div class="input-group col-lg-12">
+                        <input id="inputPayText" type="text" class="form-control" value="确认付款" placeholder="输入支付提交按钮包含的中文">
+                        <button class="btn btn-default" onclick="autoBuyTaobao()" type="button">测试</button>
+                    </div>              
+                </div>
+            </div>
+
+             
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title">点击测试</h3>
+                </div>
+                
+                <div class="panel-body">
+                    输入按钮包含的文字
+                    <div class="input-group col-lg-12">
+                        <input id="inputBtnText" type="text" class="form-control" placeholder=" 输入按钮包含的文字">
+                        <span class="input-group-btn">
+                        <button class="btn btn-default" onclick="test()" type="button">测试</button>
+                        </span>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+    </body>
+</html>
