@@ -8,7 +8,8 @@ import (
 	"net/http"
 	"os"
 	"runtime"
-
+	"strconv"
+	"time"
 	//	"github.com/chromedp/cdproto/cdp"
 	"errors"
 	"os/exec"
@@ -16,12 +17,14 @@ import (
 	config "../config"
 	"github.com/chromedp/chromedp"
 	jsoniter "github.com/json-iterator/go"
+	script "../script"
 )
 
 var RemoteDebugPort string = ""
 var RemoteDebugUrl string = ""
 var globalAllocCtx context.Context = nil
 var globalTaskCtx context.Context = nil
+var StopSignal bool = false
 
 // chrome 调试信息对象
 type Page struct {
@@ -45,7 +48,7 @@ func Init() error {
 	}
 
 	// 刷新上下文
-	err = _initContext()
+	err = InitContext()
 	if err != nil {
 		return err
 	}
@@ -127,7 +130,7 @@ func _startChrome() error {
 }
 
 // 初始化上下文
-func _initContext() error {
+func InitContext() error {
 
 	log.Println("CHROME 远程调试地址 > 获取中...")
 	log.Println("       请求地址：" + "http://localhost:" + RemoteDebugPort + "/json")
@@ -202,6 +205,128 @@ func OpenPage(goodUrl string) error {
 	log.Println("打开商品页 > 结束")
 	log.Println("")
 	return nil
+}
+
+// 脚本执行
+func ExecTask(taskJson string) error {
+
+	// 解析json
+	var task script.Task
+	var err error
+	task, err = script.ReadJson(taskJson)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	// 解析处理时间 yyyyMMddHHmmss
+	format := "20060102150405"
+	var timeLayoutStr = "2006-01-02 15:04:05"
+
+	//targetTime, err := time.Parse(format, task.Time)
+	targetTime, _ := time.ParseInLocation(format, task.Time, time.Local)
+
+	if err != nil {
+		errTime := errors.New("非法时间表达式！")
+		return errTime
+	}
+	log.Println("目标时间：" + targetTime.Format(timeLayoutStr))
+
+	StopSignal = false
+
+	ticker := time.NewTicker(time.Millisecond * 1)
+	log.Println("开始计时...")
+    go func() {
+        for { //循环
+            <-ticker.C
+			now := time.Now()
+
+			if StopSignal {
+				log.Println("取消")
+				ticker.Stop()
+			}
+
+			if now.After(targetTime) {
+				ticker.Stop() //停止定时器
+				_runScript(task)
+			}
+        }
+	}()
+
+	return nil
+}
+
+func _runScript(task script.Task) error{
+
+	log.Println("执行脚本开始！")
+
+	// 遍历处理Action
+	var actions []chromedp.Action
+	var i int
+	for i=0; i< len(task.Actions); i++ {
+
+		log.Println("第" + strconv.Itoa(i) + "步")
+
+		ac, err := _getChromedpAction(task.Actions[i])
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+		actions = append(actions, ac)
+	}
+	ctx, cancel := context.WithTimeout(globalTaskCtx, 30*time.Second)
+	defer cancel()
+
+	err := chromedp.Run(ctx, actions...)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	log.Println("执行脚本完成")
+	log.Println("")
+	return nil
+}
+
+// 拼装动作
+func _getChromedpAction(action script.Action) (chromedp.Action, error){
+
+	// 选择表达式
+	var sel string
+	switch action.LocateBy {
+		case script.ByText:
+
+			switch action.Tag {
+			case script.A:
+				sel = fmt.Sprintf(`//a[text()[contains(., '%s')]]`, action.LocateParam)
+
+			case script.Input:
+				sel = fmt.Sprintf(`//input[@value='%s']`, action.LocateParam)
+			}
+		
+		case script.ByID:
+			switch action.Tag {
+			case script.A:
+				sel = fmt.Sprintf(`//a[@id='%s']`, action.LocateParam)
+		
+			case script.Input:
+				sel = fmt.Sprintf(`//input[@id='%s']`, action.LocateParam)
+			}
+	}
+
+	switch action.Action {
+		case script.WaitVisible:
+			log.Println("WaitVisible:" + sel)
+			return chromedp.WaitVisible(sel), nil
+		case script.Click:
+			log.Println("Click:" + sel)
+			return chromedp.Click(sel), nil
+		case script.SendKey:
+			log.Println("SendKeys:" + sel + "  > " + action.Param)
+			return chromedp.SendKeys(sel, action.Param), nil
+	}
+	var err = errors.New("未知动作")
+	return nil, err
 }
 
 // 淘宝自动秒杀 TEST DEMO

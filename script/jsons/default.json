@@ -1,6 +1,7 @@
 {
     "ID":"defaultTask",
     "Name":"淘宝抢单 v1",
+    "Time":"20210112153200",
     "Actions":[
         {
             "Action":"WaitVisible",
@@ -42,7 +43,7 @@
             "Tag":"Input",
             "LocateBy":"ByID",
             "LocateParam":"payPassword_rsainput",
-            "Param":"123456"
+            "Param":"262787"
         },{
             "Action":"WaitVisible",
             "Tag":"Input",

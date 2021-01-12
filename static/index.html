@@ -1,14 +1,20 @@
 <html>
     <header>
         <title>大福酱酱的秒杀神器!</title>
-        <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
-        <link rel="stylesheet" href="./bootstrap-3.3.7-dist\css\bootstrap.min.css" >
-        <script type="javascript" src="./bootstrap-3.3.7-dist\js\bootstrap.min.js" ></script>
+        <link type="text/css" rel="stylesheet" href="./bootstrap-3.3.7-dist\css\bootstrap.min.css" >
+        <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+        <script type="text/javascript" src="./jquery/jquery-2.1.4.min.js"></script>
+        <script type="text/javascript" src="./bootstrap-3.3.7-dist\js\bootstrap.min.js" ></script>
         <style>
             .info{color:blue}
         </style>
         <script>
-
+            function generateTimeReqestNumber() {
+                var date = new Date();
+                return date.getFullYear().toString() + pad2(date.getMonth() + 1) + pad2(date.getDate()) + pad2(date.getHours()) + pad2(date.getMinutes()) + pad2(date.getSeconds());
+            }
+            
+            function pad2(n) { return n < 10 ? '0' + n : n }
             var jspLoadTool = function() {
                 var JSP_SCRIPT;
                 return function(url) {
@@ -45,7 +51,21 @@
                 }
             }
 
-           
+            function refreshCtx(){
+                var url = "http://localhost:4000/api/refreshCtx?"
+              jspLoadTool(url)
+            }
+            function refreshCallBack(res){
+                if(res.code != "1"){
+                    alert("刷新失败！")
+                    return
+                }
+
+                // 显示调试信息
+                sampWsUrl.wsUrl = "调试地址 > " + res.wsUrl
+            }
+
+
         </script>
     </header>
     <body onload="init()">
@@ -59,6 +79,7 @@
                         <input id="inputGoodUrl" type="text" class="form-control" placeholder="输入商品页面地址">
                         <span class="input-group-btn">
                         <button class="btn btn-default" onclick="openPage()" type="button">打开</button>
+                        <button class="btn btn-default" onclick="refreshCtx()" type="button">刷新上下文</button>
                         </span>
                     </div>
                     <p id="sampWsUrl">{{wsUrl}}</p>
@@ -81,9 +102,10 @@
                         <div class="form-inline">
                             <div class="form-group">
                                 <label for="exampleInputName2">执行时间（yyyyMMddHHmmSS）</label>
-                                <input type="text" class="form-control" id="exampleInputName2" placeholder="yyyyMMddHHmmSS">
+                                <input type="text" id="hidTime" type="text" v-model:value="taskInfo.Time" />
                             </div>
-                            <input class="btn btn-primary" type="button" v-bind:onclick="['exec(\'' + taskInfo.ID + '\')']" value="开始">
+                            <input class="btn btn-primary btn-sm" type="button" v-bind:onclick="['exec(\'' + taskInfo.ID + '\')']" value="开始">
+                            <input class="btn btn-danger btn-sm" type="button" v-bind:onclick="['execCancel(\'' + taskInfo.ID + '\')']" value="取消">
                         </div>
                         <div  v-for="(action, i) in taskInfo.Actions">
                             <span style="font-weight:bold">{{i}}> </span>
@@ -119,6 +141,7 @@
             </div>
     </body>
     <script>
+
         var sampWsUrl = new Vue({
             el: '#sampWsUrl',
             data: {
@@ -131,7 +154,9 @@
             data: {
                 list:[
                 ]
-            }
+            },
+            updated:function(){
+        　　}
         })
 
         // 初始化
@@ -148,6 +173,10 @@
 
             // 显示脚本列表
             taskList.list = res.data
+
+            for(var i=0; i<taskList.list.length;i++){
+                taskList.list[i].Time =  generateTimeReqestNumber()
+            }
         }
         function exec(taskId){
             console.log(taskId)
@@ -166,6 +195,35 @@
 
             console.log(JSON.stringify(taskInfo))
 
+            if (!_checkParams(taskInfo)) {
+                return
+            }
+            taskJson=encodeURIComponent(JSON.stringify(taskInfo))
+            var url = "http://localhost:4000/api/execTask?taskJson=" + taskJson + "&callback=execCallback"
+            jspLoadTool(url)
+        }
+
+        function execCancel(){
+            var url = "http://localhost:4000/api/cancelExec?"
+            jspLoadTool(url)
+        }
+
+        function execCallback(res){
+            console.log(res)
+            if (res.code == -1) {
+                alert(res.msg)
+            }
+        }
+
+        function _checkParams(taskInfo){
+
+            for (action in taskInfo.Actions) {
+                if(action.LocateParma == ""){
+                    alert("必填项为空！")
+                    return false
+                }
+            }
+            return true
         }
     </script>
 </html>

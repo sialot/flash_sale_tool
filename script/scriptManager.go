@@ -47,6 +47,7 @@ type Task struct {
 	ID      string   // 处理ID
 	Name    string   // 任务名称
 	Actions []Action // 动作列表
+	Time string // 定时
 }
 
 var GlobalTasks []Task
@@ -84,6 +85,18 @@ func GetTaskListJson() (string, error) {
 	}
 	
 	return string(bjson), nil
+}
+
+// 解析json
+func ReadJson(json string) (Task, error) {
+	var task Task
+
+	err := jsoniter.Unmarshal([]byte(json), &task)
+	if err != nil {
+		log.Println("json解析出错!")
+		return task, err
+	}
+	return task, nil
 }
 
 func _loadJson(path string) error {

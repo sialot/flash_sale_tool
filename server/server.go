@@ -30,9 +30,16 @@ func StartServer(port string) {
 	// 获取任务列表
 	mux.HandleFunc("/api/getTaskList", getTaskList)
 
+	// 刷新上下文
+	mux.HandleFunc("/api/refreshCtx", refreshCtx)
+	
 	// 打开商品页
 	mux.HandleFunc("/api/openPage", openPage)
 
+	// 打开商品页
+	mux.HandleFunc("/api/execTask", execTask)
+	mux.HandleFunc("/api/cancelExec", cancelExec)
+	
 	// 自动秒杀测试
 	mux.HandleFunc("/api/autoBuyTest", autoBuyTest)
 
@@ -76,6 +83,18 @@ func welcome(w http.ResponseWriter, r *http.Request) {
 
 	resultJson += "initCallBack({code:1, wsUrl:'" + webdriver.RemoteDebugUrl + 
 		"',data:" + taskListJson + "})"
+	w.Write([]byte(resultJson))
+}
+
+func refreshCtx(w http.ResponseWriter, r *http.Request) {
+	var resultJson string
+
+	err := webdriver.InitContext()
+	if err != nil {
+		resultJson = `{code:-1}`
+	}
+
+	resultJson += "refreshCallBack({code:1, wsUrl:'" + webdriver.RemoteDebugUrl + "'})"
 	w.Write([]byte(resultJson))
 }
 
@@ -143,10 +162,52 @@ func openPage(w http.ResponseWriter, r *http.Request) {
 }
 
 // 自定义脚本
-func runScript(w http.ResponseWriter, r *http.Request) {
+func execTask(w http.ResponseWriter, r *http.Request) {
 
-	// TODO
+	var responseStr string
+	values := r.URL.Query()
+	taskJson := values.Get("taskJson")
+	callback := values.Get("callback")
 
+	if taskJson == "" {
+		responseStr = `{code:-1}`
+
+		if callback != "" {
+			responseStr = callback + "(" + responseStr + ")"
+		}
+		w.Write([]byte(responseStr))
+		return
+	}
+
+	log.Println("EXECTASK > " + taskJson)
+
+	err := webdriver.ExecTask(taskJson)
+
+	if err != nil {
+		responseStr = `{code:-1, msg:'` + err.Error() + `'}`
+
+		if callback != "" {
+			responseStr = callback + "(" + responseStr + ")"
+		}
+		w.Write([]byte(responseStr))
+		return
+	}
+
+	responseStr = `{code:1}`
+
+	if callback != "" {
+		responseStr = callback + "(" + responseStr + ")"
+	}
+
+	w.Write([]byte(responseStr))
+}
+
+// 取消
+func cancelExec(w http.ResponseWriter, r *http.Request) {
+	var responseStr string
+	webdriver.StopSignal = true
+	responseStr = `{code:1}`
+	w.Write([]byte(responseStr))
 }
 
 // 自动购买测试 DEMO
