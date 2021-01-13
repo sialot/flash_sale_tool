@@ -2,19 +2,19 @@ package webdriver
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
-	"runtime"
-	"time"
-	"sync"
-	//	"github.com/chromedp/cdproto/cdp"
-	"errors"
 	"os/exec"
+	"runtime"
+	"sync"
+	"time"
 
 	config "../config"
 	script "../script"
+	//"github.com/chromedp/cdproto/cdp"
 	"github.com/chromedp/chromedp"
 	jsoniter "github.com/json-iterator/go"
 )
@@ -137,7 +137,7 @@ func _startChrome() error {
 	}
 
 	log.Println("CHROME > 启动成功！")
-	
+
 	return nil
 }
 
@@ -164,8 +164,8 @@ func InitContext() error {
 		// 命令执行失败
 		log.Println("INIT CONTEXT > 获取失败！ 请关闭所有正在运行的chrome浏览器,然后重新启动秒杀神器！")
 		return err
-	} 
-	
+	}
+
 	defer resp.Body.Close()
 
 	// 返回成功
@@ -197,7 +197,7 @@ func InitContext() error {
 	GlobalTaskCtx, _ = chromedp.NewContext(allocCtx, chromedp.WithLogf(log.Printf))
 	firstOpen = true
 	log.Println("INIT CONTEXT >获取成功！")
-	
+
 	return nil
 }
 
@@ -205,7 +205,7 @@ func InitContext() error {
 func OpenPage(goodUrl string) error {
 
 	log.Println("打开商品页 > " + goodUrl)
-	
+
 	// 抢单中无法操作
 	if _getTaskProcessFlag() {
 		log.Println("当前已有任务")
@@ -225,7 +225,7 @@ func OpenPage(goodUrl string) error {
 	}
 	firstOpen = false
 	log.Println("打开商品页 > 成功")
-	
+
 	return nil
 }
 
@@ -237,7 +237,7 @@ func StopTask() {
 }
 
 // 设置执行标识
-func _setTaskProcessFlag(flag bool){
+func _setTaskProcessFlag(flag bool) {
 	mutex.Lock()
 	defer mutex.Unlock()
 	taskProcessFlag = flag
@@ -318,14 +318,14 @@ func ExecTask(taskJson string) error {
 			var printStr = now.Format(timeLayoutStr)
 			if lastPrintStr != printStr {
 				lastPrintStr = printStr
-				fmt.Printf("\r	[等待中] 当前时间：%s，目标时间：%s",  printStr, targetTime.Format(timeLayoutStr))
+				fmt.Printf("\r	[等待中] 当前时间：%s，目标时间：%s", printStr, targetTime.Format(timeLayoutStr))
 
 				//根据返回类型定义res
 				var res string
 				ctx, cancel := context.WithTimeout(GlobalTaskCtx, 100*time.Millisecond)
 				defer cancel()
 				_ = chromedp.Run(ctx, chromedp.Tasks{
-					chromedp.Evaluate(`document.title = '抢单中...[` + now.Format("15:04:05") + `]'`, &res),
+					chromedp.Evaluate(`document.title = '抢单中...[`+now.Format("15:04:05")+`]'`, &res),
 				})
 			}
 
@@ -354,7 +354,7 @@ func _runScript(task script.Task) error {
 
 		// 获得action
 		var actionInfo = task.Actions[i]
-	
+
 		ac, err := _getChromedpAction(actionInfo)
 		if err != nil {
 			log.Println(err)
@@ -376,9 +376,9 @@ func _runScript(task script.Task) error {
 
 				// 输入需要更多时间
 				if task.Actions[i].Action == script.SendKey {
-					timeout =  5000*time.Millisecond
+					timeout = 5000 * time.Millisecond
 				} else {
-					timeout =  10*time.Millisecond
+					timeout = 10 * time.Millisecond
 				}
 				ctx, cancel := context.WithTimeout(GlobalTaskCtx, timeout)
 				err = chromedp.Run(ctx, ac)
@@ -395,7 +395,7 @@ func _runScript(task script.Task) error {
 				break
 			}
 
-			timeout =  5000*time.Millisecond
+			timeout = 5000 * time.Millisecond
 			ctx, cancel := context.WithTimeout(GlobalTaskCtx, timeout)
 
 			err = chromedp.Run(ctx, ac)

@@ -30,7 +30,7 @@ func StartServer(port string) {
 
 	// 刷新上下文
 	mux.HandleFunc("/api/refreshCtx", refreshCtx)
-	
+
 	// 打开商品页
 	mux.HandleFunc("/api/openPage", openPage)
 
@@ -73,7 +73,7 @@ func welcome(w http.ResponseWriter, r *http.Request) {
 		taskListJson = "[]"
 	}
 
-	resultJson += "initCallBack({code:1, wsUrl:'" + webdriver.RemoteDebugUrl + 
+	resultJson += "initCallBack({code:1, wsUrl:'" + webdriver.RemoteDebugUrl +
 		"',data:" + taskListJson + "})"
 	w.Write([]byte(resultJson))
 }
@@ -108,7 +108,7 @@ func getTaskList(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(responseStr))
 		return
 	}
-	
+
 	responseStr = `{code:1,data:` + taskListJson + `}`
 	if callback != "" {
 		responseStr = callback + "(" + responseStr + ")"
@@ -133,7 +133,7 @@ func openPage(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(responseStr))
 		return
 	}
-	
+
 	err := webdriver.OpenPage(goodUrl)
 	if err != nil {
 		responseStr = `{code:-1, msg:'` + err.Error() + `'}`

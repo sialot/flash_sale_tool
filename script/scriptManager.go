@@ -1,8 +1,8 @@
 package script
 
 import (
-	"log"
 	"io/ioutil"
+	"log"
 	"strconv"
 	// "github.com/go-basic/uuid"
 	jsoniter "github.com/json-iterator/go"
@@ -10,45 +10,48 @@ import (
 
 // 标签类型
 type TagType string
+
 const (
-	_ TagType = ""
-	A = "A"
-	Input = "Input"
+	_     TagType = ""
+	A             = "A"
+	Input         = "Input"
 )
 
 // 操作类型
 type ActionType string
+
 const (
-	_ ActionType = ""
-	WaitVisible = "WaitVisible"
-	Click = "Click"
-	SendKey = "SendKey"
+	_           ActionType = ""
+	WaitVisible            = "WaitVisible"
+	Click                  = "Click"
+	SendKey                = "SendKey"
 )
 
 // 定位方式
 type LocateType string
+
 const (
-	_ ActionType = ""
-	ByText = "ByText"
-	ByID = "ByID"
+	_      ActionType = ""
+	ByText            = "ByText"
+	ByID              = "ByID"
 )
 
 // 动作
 type Action struct {
-	Action   ActionType
-	Tag      TagType
-	LocateBy string
+	Action      ActionType
+	Tag         TagType
+	LocateBy    string
 	LocateParam string
-	Param  string
+	Param       string
 }
 
 // 任务构造体
 type Task struct {
-	ID      string   // 处理ID
-	Name    string   // 任务名称
-	Actions []Action // 动作列表
-	Time string // 定时 yyyyMMddHHmmss
-	DefaultTime string // 默认时间点 HHmmss
+	ID          string   // 处理ID
+	Name        string   // 任务名称
+	Actions     []Action // 动作列表
+	Time        string   // 定时 yyyyMMddHHmmss
+	DefaultTime string   // 默认时间点 HHmmss
 }
 
 var GlobalTasks []Task
@@ -65,26 +68,26 @@ func LoadScripts() {
 		panic(err)
 	}
 
-    for _, fi := range rd {
-        if fi.IsDir() {
+	for _, fi := range rd {
+		if fi.IsDir() {
 			continue
-        } else {
+		} else {
 			_loadJson(pathName + fi.Name())
-        }
+		}
 	}
 
-	log.Println("SCRIPT MANAGER > 结束， 成功加载 " + strconv.Itoa(len(GlobalTasks)) + "个脚本" )
+	log.Println("SCRIPT MANAGER > 结束， 成功加载 " + strconv.Itoa(len(GlobalTasks)) + "个脚本")
 	log.Println("-------------------------------------------")
 }
 
 // 获取任务列表json字符串
 func GetTaskListJson() (string, error) {
-	
-	bjson,err := jsoniter.Marshal(GlobalTasks)
-	if err!=nil {
+
+	bjson, err := jsoniter.Marshal(GlobalTasks)
+	if err != nil {
 		return "", err
 	}
-	
+
 	return string(bjson), nil
 }
 
@@ -120,6 +123,6 @@ func _loadJson(path string) error {
 	return nil
 }
 
-func _writeJson(path string, tsk Task){
+func _writeJson(path string, tsk Task) {
 
 }

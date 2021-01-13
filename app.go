@@ -3,11 +3,12 @@ package main
 import (
 	"log"
 	"net/http"
+	"time"
+
 	config "./config"
 	webdriver "./driver"
-	server "./server"
 	script "./script"
-	"time"
+	server "./server"
 )
 
 // 构造方法
@@ -54,4 +55,3 @@ func main() {
 
 	server.StartServer(port)
 }
-
