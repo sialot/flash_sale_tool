@@ -304,6 +304,7 @@ func ExecTask(taskJson string) error {
 
 			// 到达预定时间
 			if now.After(targetTime) {
+				fmt.Printf("\n")
 				ticker.Stop() //停止定时器
 				err = _runScript(task)
 				_setTaskProcessFlag(false)
