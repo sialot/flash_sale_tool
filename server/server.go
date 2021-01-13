@@ -16,8 +16,6 @@ import (
 //
 func StartServer(port string) {
 
-	log.Println("API SERVER > 启动中...")
-
 	// 声明路由
 	mux := http.NewServeMux()
 
@@ -139,8 +137,7 @@ func openPage(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(responseStr))
 		return
 	}
-
-	log.Println("OPEN_PAGE > " + goodUrl)
+	
 	err := webdriver.OpenPage(goodUrl)
 	if err != nil {
 		responseStr = `{code:-1, msg:'` + err.Error() + `'}`

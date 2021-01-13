@@ -38,6 +38,9 @@ func main() {
 			break
 		}
 
+		log.Println("API SERVER > 启动成功!")
+		log.Println("-------------------------------------------")
+
 		// 加载脚本
 		script.LoadScripts()
 
@@ -47,8 +50,6 @@ func main() {
 			panic(err)
 		}
 
-		log.Println("API SERVER > 启动成功!")
-		log.Println("")
 	}()
 
 	server.StartServer(port)

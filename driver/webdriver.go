@@ -59,13 +59,13 @@ func Init() error {
 // 启动浏览器
 func _startChrome() error {
 
-	log.Println("CHROME 浏览器 > 启动中...")
+	log.Println("CHROME > 浏览器启动中...")
 	var err error
 
 	// 抢单UI网址
 	port, err := config.SysConfig.Get("server.port")
 	if err != nil {
-		log.Println("配置加载失败\"chrome.remote_debugging_port\"")
+		log.Println("	配置加载失败\"chrome.remote_debugging_port\"")
 		return err
 	}
 	UIUrl := "http://localhost:" + port + "/"
@@ -73,18 +73,18 @@ func _startChrome() error {
 	// 获取远程调试端口
 	RemoteDebugPort, err = config.SysConfig.Get("chrome.remote_debugging_port")
 	if err != nil {
-		log.Println("配置加载失败\"chrome.remote_debugging_port\"")
+		log.Println("	配置加载失败\"chrome.remote_debugging_port\"")
 		return err
 	}
 
-	log.Println("       远程调试端口：" + RemoteDebugPort)
+	log.Println("	远程调试端口：" + RemoteDebugPort)
 
 	// 判断当前操作系统
 	switch os := runtime.GOOS; os {
 
 	// OS X
 	case "darwin":
-		log.Println("       当前系统：mac os x")
+		log.Println("	当前系统：mac os x")
 
 		// 拼接启动命令
 		// /usr/bin/open -a Google\ Chrome --args --remote-debugging-port=9222
@@ -93,19 +93,19 @@ func _startChrome() error {
 		if err != nil {
 
 			// 命令执行失败
-			log.Println("CHROME 浏览器 > 启动失败！")
+			log.Println("	CHROME > 启动失败！")
 			return err
 		}
 
 	// Windows
 	case "windows":
-		log.Println("       当前系统：windows")
+		log.Println("	当前系统：windows")
 		chromePath, err := config.SysConfig.Get("chrome.path.windows")
 		if err != nil {
-			log.Println("配置加载失败\"chrome.path.windows\"")
+			log.Println("	配置加载失败\"chrome.path.windows\"")
 			return err
 		}
-		log.Println("       可执行文件位置：" + chromePath)
+		log.Println("	可执行文件位置：" + chromePath)
 
 		// 拼接启动命令
 		// cmd.exe /c start "" "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe" --new-window --remote-debugging-port=9222 http://localhost:9222/json
@@ -114,26 +114,26 @@ func _startChrome() error {
 		if err != nil {
 
 			// 命令执行失败
-			log.Println("CHROME 浏览器 > 启动失败！")
+			log.Println("	启动失败！")
 			return err
 		}
 
 	default:
-		fmt.Println("不支持当前操作系统")
+		fmt.Println("	不支持当前操作系统")
 		err := errors.New("不支持当前操作系统")
 		return err
 	}
 
-	log.Println("CHROME 浏览器 > 启动成功！")
-	log.Println("")
+	log.Println("CHROME > 启动成功！")
+	
 	return nil
 }
 
 // 初始化上下文
 func InitContext() error {
 
-	log.Println("CHROME 远程调试地址 > 获取中...")
-	log.Println("       请求地址：" + "http://localhost:" + RemoteDebugPort + "/json")
+	log.Println("INIT CONTEXT > 获取中...")
+	log.Println("	请求地址：" + "http://localhost:" + RemoteDebugPort + "/json")
 
 	RemoteDebugUrl = ""
 
@@ -142,10 +142,10 @@ func InitContext() error {
 	if err != nil {
 
 		// 命令执行失败
-		log.Println("CHROME 远程调试地址 > 获取失败！")
-		log.Println("       请关闭所有正在运行的chrome浏览器,然后重新启动秒杀神器！")
+		log.Println("INIT CONTEXT > 获取失败！ 请关闭所有正在运行的chrome浏览器,然后重新启动秒杀神器！")
 		return err
-	}
+	} 
+	
 	defer resp.Body.Close()
 
 	// 返回成功
@@ -153,8 +153,7 @@ func InitContext() error {
 
 		jsonStr, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			log.Println("CHROME 远程调试地址 > 获取失败！")
-			log.Println("       请关闭所有正在运行的chrome浏览器,然后重新启动秒杀神器！")
+			log.Println("INIT CONTEXT > 获取失败！ 请关闭所有正在运行的chrome浏览器,然后重新启动秒杀神器！")
 			return err
 		}
 
@@ -167,33 +166,25 @@ func InitContext() error {
 
 		if len(pageArr) > 0 {
 			RemoteDebugUrl = pageArr[0].WebSocketDebuggerUrl
+			log.Println("	调试地址：" + RemoteDebugUrl)
+		} else {
+			var err = errors.New("INIT CONTEXT > 获取失败")
+			log.Println("INIT CONTEXT > 获取失败！ 请关闭所有正在运行的chrome浏览器,然后重新启动秒杀神器！")
+			return err
 		}
 	}
-
-	if RemoteDebugUrl != "" {
-		log.Println("       调试地址：" + RemoteDebugUrl)
-		log.Println("CHROME 远程调试地址 > 获取成功！")
-		log.Println("")
-
-		log.Println("刷新远程调试上下文 > 开始")
-		globalAllocCtx, _ = chromedp.NewRemoteAllocator(context.Background(), RemoteDebugUrl)
-		globalTaskCtx, _ = chromedp.NewContext(globalAllocCtx, chromedp.WithLogf(log.Printf))
-		log.Println("刷新远程调试上下文 > 结束")
-		log.Println("")
-
-		return nil
-	} else {
-		err := errors.New("远程调试地址 > 获取失败！请确认网址输入正确")
-		log.Println("CHROME 远程调试地址 > 获取失败！")
-		log.Println("       请确认网址输入正确")
-		return err
-	}
+	globalAllocCtx, _ = chromedp.NewRemoteAllocator(context.Background(), RemoteDebugUrl)
+	globalTaskCtx, _ = chromedp.NewContext(globalAllocCtx, chromedp.WithLogf(log.Printf))
+	
+	log.Println("INIT CONTEXT >获取成功！")
+	
+	return nil
 }
 
 // 打开商品页
 func OpenPage(goodUrl string) error {
 
-	log.Println("打开商品页 > 开始")
+	log.Println("打开商品页 > " + goodUrl)
 	err := chromedp.Run(globalTaskCtx,
 		chromedp.Navigate(goodUrl),
 	)
@@ -202,8 +193,8 @@ func OpenPage(goodUrl string) error {
 		log.Println("打开商品页 > 失败")
 		return err
 	}
-	log.Println("打开商品页 > 结束")
-	log.Println("")
+	log.Println("打开商品页 > 成功")
+	
 	return nil
 }
 
@@ -236,20 +227,40 @@ func ExecTask(taskJson string) error {
 
 	ticker := time.NewTicker(time.Millisecond * 1)
 	log.Println("开始计时...")
+
+	var lastPrintStr string = ""
 	go func() {
-		for { //循环
-			<-ticker.C
-			now := time.Now()
+		
+		<-ticker.C
 
-			if StopSignal {
-				log.Println("取消")
-				ticker.Stop()
-			}
+		// 取消
+		if StopSignal {
+			log.Println("取消")
+			ticker.Stop()
+		}
 
-			if now.After(targetTime) {
-				ticker.Stop() //停止定时器
-				_runScript(task)
-			}
+		// 当前时间
+		now := time.Now()
+
+		// 打印等待状态
+		var printStr = now.Format(timeLayoutStr)
+		if lastPrintStr != printStr {
+			lastPrintStr = printStr
+			fmt.Printf("\r		[等待中]当前时间：%s，目标时间：%s",  printStr, targetTime.Format(timeLayoutStr))
+
+			//根据返回类型定义res
+			var res string
+			ctx, cancel := context.WithTimeout(globalTaskCtx, 100*time.Millisecond)
+			defer cancel()
+			_ = chromedp.Run(ctx, chromedp.Tasks{
+				chromedp.Evaluate(`document.title = '抢单中...[` + now.Format("15:04:05") + `]'`, &res),
+			})
+		}
+
+		// 到达预定时间
+		if now.After(targetTime) {
+			ticker.Stop() //停止定时器
+			err = _runScript(task)
 		}
 	}()
 
@@ -294,15 +305,9 @@ func _runScript(task script.Task) error {
 					timeout =  20*time.Millisecond
 				}
 				ctx, cancel := context.WithTimeout(globalTaskCtx, timeout)
-
 				err = chromedp.Run(ctx, ac)
 				cancel()
 				if err != nil {
-
-					if task.Actions[i].Action == script.Click {
-						log.Println(err)
-					}
-					
 					continue
 				} else {
 					break
@@ -329,8 +334,7 @@ func _runScript(task script.Task) error {
 		log.Println("完成")
 	}
 
-	log.Println("执行脚本完成")
-	log.Println("")
+	log.Println("执行脚本完成！")
 	return nil
 }
 

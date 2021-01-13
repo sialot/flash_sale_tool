@@ -53,14 +53,14 @@ type Task struct {
 var GlobalTasks []Task
 
 func LoadScripts() {
-	log.Println("加载抢单脚本 > ...")
+	log.Println("SCRIPT MANAGER > ...")
 
 	var pathName string = "./script/jsons/"
 
 	rd, err := ioutil.ReadDir(pathName)
 	if err != nil {
 		log.Println(err.Error())
-		log.Println("加载抢单脚本 > 失败！")
+		log.Println("SCRIPT MANAGER > 失败！")
 		panic(err)
 	}
 
@@ -72,8 +72,8 @@ func LoadScripts() {
         }
 	}
 
-	log.Println("加载抢单脚本 > 结束， 成功加载 " + strconv.Itoa(len(GlobalTasks)) + "个脚本" )
-	log.Println("")
+	log.Println("SCRIPT MANAGER > 结束， 成功加载 " + strconv.Itoa(len(GlobalTasks)) + "个脚本" )
+	log.Println("-------------------------------------------")
 }
 
 // 获取任务列表json字符串
@@ -103,18 +103,19 @@ func _loadJson(path string) error {
 	var task Task
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
-		log.Println("加载文件：" + path + "读取出错!")
+		log.Println("SCRIPT MANAGER > ...")
+		log.Println("	加载文件：" + path + "读取出错!")
 		return err
 	}
 	err = jsoniter.Unmarshal(b, &task)
 	if err != nil {
-		log.Println("加载文件：" + path + "json解析出错!")
+		log.Println("	加载文件：" + path + "json解析出错!")
 		return err
 	}
 
 	GlobalTasks = append(GlobalTasks, task)
 
-	log.Println("加载文件：" + path + " 成功！")
+	log.Println("	成功加载文件：" + path)
 	return nil
 }
 
