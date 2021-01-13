@@ -8,16 +8,16 @@ import (
 	"net/http"
 	"os"
 	"runtime"
-	"strconv"
 	"time"
+
 	//	"github.com/chromedp/cdproto/cdp"
 	"errors"
 	"os/exec"
 
 	config "../config"
+	script "../script"
 	"github.com/chromedp/chromedp"
 	jsoniter "github.com/json-iterator/go"
-	script "../script"
 )
 
 var RemoteDebugPort string = ""
@@ -52,7 +52,7 @@ func Init() error {
 	if err != nil {
 		return err
 	}
-	
+
 	return nil
 }
 
@@ -180,7 +180,7 @@ func InitContext() error {
 		globalTaskCtx, _ = chromedp.NewContext(globalAllocCtx, chromedp.WithLogf(log.Printf))
 		log.Println("刷新远程调试上下文 > 结束")
 		log.Println("")
-		
+
 		return nil
 	} else {
 		err := errors.New("远程调试地址 > 获取失败！请确认网址输入正确")
@@ -236,9 +236,9 @@ func ExecTask(taskJson string) error {
 
 	ticker := time.NewTicker(time.Millisecond * 1)
 	log.Println("开始计时...")
-    go func() {
-        for { //循环
-            <-ticker.C
+	go func() {
+		for { //循环
+			<-ticker.C
 			now := time.Now()
 
 			if StopSignal {
@@ -250,38 +250,56 @@ func ExecTask(taskJson string) error {
 				ticker.Stop() //停止定时器
 				_runScript(task)
 			}
-        }
+		}
 	}()
 
 	return nil
 }
 
-func _runScript(task script.Task) error{
+func _runScript(task script.Task) error {
 
 	log.Println("执行脚本开始！")
 
-	// 遍历处理Action
-	var actions []chromedp.Action
-	var i int
-	for i=0; i< len(task.Actions); i++ {
+	ctx, cancel := context.WithTimeout(globalTaskCtx, 30000*time.Millisecond)
+	defer cancel()
 
-		log.Println("第" + strconv.Itoa(i) + "步")
+	// 遍历处理Action
+	var i int
+	for i = 0; i < len(task.Actions); i++ {
+
+		//log.Println("第" + strconv.Itoa(i) + "步")
 
 		ac, err := _getChromedpAction(task.Actions[i])
 		if err != nil {
 			log.Println(err)
 			continue
 		}
-		actions = append(actions, ac)
+		err = chromedp.Run(ctx, ac)
+		if err != nil {
+			log.Println(err)
+			return err
+		}
 	}
-	ctx, cancel := context.WithTimeout(globalTaskCtx, 30*time.Second)
-	defer cancel()
 
-	err := chromedp.Run(ctx, actions...)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
+	// checkCtx, checkCancel := context.WithTimeout(globalTaskCtx, 100*time.Millisecond)
+
+	// i = 0
+	// for {
+	// 	i++
+	// 	if i >= 50 {
+	// 		break
+	// 	}
+	// 	err := chromedp.Run(checkCtx, actions[0])
+	// 	if err != nil {
+
+	// 		continue
+	// 	}
+	// 	if err == nil {
+	// 		log.Println("wait finish")
+	// 		break
+	// 	}
+	// }
+	// checkCancel()
 
 	log.Println("执行脚本完成")
 	log.Println("")
@@ -289,41 +307,41 @@ func _runScript(task script.Task) error{
 }
 
 // 拼装动作
-func _getChromedpAction(action script.Action) (chromedp.Action, error){
+func _getChromedpAction(action script.Action) (chromedp.Action, error) {
 
 	// 选择表达式
 	var sel string
 	switch action.LocateBy {
-		case script.ByText:
+	case script.ByText:
 
-			switch action.Tag {
-			case script.A:
-				sel = fmt.Sprintf(`//a[text()[contains(., '%s')]]`, action.LocateParam)
+		switch action.Tag {
+		case script.A:
+			sel = fmt.Sprintf(`//a[text()[contains(., '%s')]]`, action.LocateParam)
 
-			case script.Input:
-				sel = fmt.Sprintf(`//input[@value='%s']`, action.LocateParam)
-			}
-		
-		case script.ByID:
-			switch action.Tag {
-			case script.A:
-				sel = fmt.Sprintf(`//a[@id='%s']`, action.LocateParam)
-		
-			case script.Input:
-				sel = fmt.Sprintf(`//input[@id='%s']`, action.LocateParam)
-			}
+		case script.Input:
+			sel = fmt.Sprintf(`//input[@value='%s']`, action.LocateParam)
+		}
+
+	case script.ByID:
+		switch action.Tag {
+		case script.A:
+			sel = fmt.Sprintf(`//a[@id='%s']`, action.LocateParam)
+
+		case script.Input:
+			sel = fmt.Sprintf(`//input[@id='%s']`, action.LocateParam)
+		}
 	}
 
 	switch action.Action {
-		case script.WaitVisible:
-			log.Println("WaitVisible:" + sel)
-			return chromedp.WaitVisible(sel), nil
-		case script.Click:
-			log.Println("Click:" + sel)
-			return chromedp.Click(sel), nil
-		case script.SendKey:
-			log.Println("SendKeys:" + sel + "  > " + action.Param)
-			return chromedp.SendKeys(sel, action.Param), nil
+	case script.WaitVisible:
+		log.Println("WaitVisible:" + sel)
+		return chromedp.WaitVisible(sel), nil
+	case script.Click:
+		log.Println("Click:" + sel)
+		return chromedp.Click(sel), nil
+	case script.SendKey:
+		log.Println("SendKeys:" + sel + "  > " + action.Param)
+		return chromedp.SendKeys(sel, action.Param), nil
 	}
 	var err = errors.New("未知动作")
 	return nil, err
