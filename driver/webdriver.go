@@ -194,8 +194,10 @@ func InitContext() error {
 func OpenPage(goodUrl string) error {
 
 	log.Println("打开商品页 > " + goodUrl)
+	var res string
 	err := chromedp.Run(GlobalTaskCtx,
 		chromedp.Navigate(goodUrl),
+		chromedp.Evaluate(`document.title = '【秒杀神器】' + document.title`, &res),
 	)
 	if err != nil {
 		log.Println(err)
@@ -291,7 +293,7 @@ func ExecTask(taskJson string) error {
 			var printStr = now.Format(timeLayoutStr)
 			if lastPrintStr != printStr {
 				lastPrintStr = printStr
-				fmt.Printf("\r		[等待中]当前时间：%s，目标时间：%s",  printStr, targetTime.Format(timeLayoutStr))
+				fmt.Printf("\r	[等待中] 当前时间：%s，目标时间：%s",  printStr, targetTime.Format(timeLayoutStr))
 
 				//根据返回类型定义res
 				var res string
