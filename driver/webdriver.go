@@ -9,7 +9,7 @@ import (
 	"os"
 	"runtime"
 	"time"
-
+	"sync"
 	//	"github.com/chromedp/cdproto/cdp"
 	"errors"
 	"os/exec"
@@ -20,11 +20,21 @@ import (
 	jsoniter "github.com/json-iterator/go"
 )
 
+// 远程调试端口
 var RemoteDebugPort string = ""
+
+// 远程调试地址
 var RemoteDebugUrl string = ""
-var globalAllocCtx context.Context = nil
-var globalTaskCtx context.Context = nil
+
+// 全局上下文
+var GlobalTaskCtx context.Context = nil
+
+// 停止标志
 var StopSignal bool = false
+
+// 操作锁
+var mutex sync.Mutex
+var taskProcessFlag bool = false
 
 // chrome 调试信息对象
 type Page struct {
@@ -173,8 +183,8 @@ func InitContext() error {
 			return err
 		}
 	}
-	globalAllocCtx, _ = chromedp.NewRemoteAllocator(context.Background(), RemoteDebugUrl)
-	globalTaskCtx, _ = chromedp.NewContext(globalAllocCtx, chromedp.WithLogf(log.Printf))
+	allocCtx, _ := chromedp.NewRemoteAllocator(context.Background(), RemoteDebugUrl)
+	GlobalTaskCtx, _ = chromedp.NewContext(allocCtx, chromedp.WithLogf(log.Printf))
 	
 	log.Println("INIT CONTEXT >获取成功！")
 	
@@ -185,7 +195,7 @@ func InitContext() error {
 func OpenPage(goodUrl string) error {
 
 	log.Println("打开商品页 > " + goodUrl)
-	err := chromedp.Run(globalTaskCtx,
+	err := chromedp.Run(GlobalTaskCtx,
 		chromedp.Navigate(goodUrl),
 	)
 	if err != nil {
@@ -198,8 +208,40 @@ func OpenPage(goodUrl string) error {
 	return nil
 }
 
+// 终止任务
+func StopTask() {
+	mutex.Lock()
+	defer mutex.Unlock()
+	StopSignal = true
+}
+
+// 设置执行标识
+func _setTaskProcessFlag(flag bool){
+	mutex.Lock()
+	defer mutex.Unlock()
+	taskProcessFlag = flag
+}
+
+// 获取执行标识
+func _getTaskProcessFlag() bool {
+	mutex.Lock()
+	defer mutex.Unlock()
+	return taskProcessFlag
+}
+
 // 执行任务
 func ExecTask(taskJson string) error {
+
+	log.Println("EXECTASK > " + taskJson)
+
+	// 防止连点
+	if _getTaskProcessFlag() {
+		log.Println("EXECTASK > 当前已有任务")
+		var err = errors.New("当前已有任务执行！")
+		return err
+	} else {
+		_setTaskProcessFlag(true)
+	}
 
 	// 解析json
 	var task script.Task
@@ -207,6 +249,7 @@ func ExecTask(taskJson string) error {
 	task, err = script.ReadJson(taskJson)
 	if err != nil {
 		log.Println(err)
+		_setTaskProcessFlag(false)
 		return err
 	}
 
@@ -219,6 +262,7 @@ func ExecTask(taskJson string) error {
 
 	if err != nil {
 		errTime := errors.New("非法时间表达式！")
+		_setTaskProcessFlag(false)
 		return errTime
 	}
 	log.Println("目标时间：" + targetTime.Format(timeLayoutStr))
@@ -237,6 +281,8 @@ func ExecTask(taskJson string) error {
 		if StopSignal {
 			log.Println("取消")
 			ticker.Stop()
+			_setTaskProcessFlag(false)
+			return
 		}
 
 		// 当前时间
@@ -250,7 +296,7 @@ func ExecTask(taskJson string) error {
 
 			//根据返回类型定义res
 			var res string
-			ctx, cancel := context.WithTimeout(globalTaskCtx, 100*time.Millisecond)
+			ctx, cancel := context.WithTimeout(GlobalTaskCtx, 100*time.Millisecond)
 			defer cancel()
 			_ = chromedp.Run(ctx, chromedp.Tasks{
 				chromedp.Evaluate(`document.title = '抢单中...[` + now.Format("15:04:05") + `]'`, &res),
@@ -261,6 +307,7 @@ func ExecTask(taskJson string) error {
 		if now.After(targetTime) {
 			ticker.Stop() //停止定时器
 			err = _runScript(task)
+			_setTaskProcessFlag(false)
 		}
 	}()
 
@@ -304,7 +351,7 @@ func _runScript(task script.Task) error {
 				} else {
 					timeout =  20*time.Millisecond
 				}
-				ctx, cancel := context.WithTimeout(globalTaskCtx, timeout)
+				ctx, cancel := context.WithTimeout(GlobalTaskCtx, timeout)
 				err = chromedp.Run(ctx, ac)
 				cancel()
 				if err != nil {
@@ -320,7 +367,7 @@ func _runScript(task script.Task) error {
 			}
 
 			timeout =  5000*time.Millisecond
-			ctx, cancel := context.WithTimeout(globalTaskCtx, timeout)
+			ctx, cancel := context.WithTimeout(GlobalTaskCtx, timeout)
 
 			err = chromedp.Run(ctx, ac)
 			cancel()
@@ -392,7 +439,7 @@ func AutoBuyTaobaoV1(buyText string, orderText string, pwText string, payText st
 	orderSel := fmt.Sprintf(`//a[text()[contains(., '%s')]]`, orderText)
 	paySel := fmt.Sprintf(`//input[@value='%s']`, payText)
 
-	err := chromedp.Run(globalTaskCtx,
+	err := chromedp.Run(GlobalTaskCtx,
 		chromedp.WaitVisible(buySel),
 		chromedp.Click(buySel),
 		chromedp.WaitVisible(orderSel),
@@ -438,7 +485,7 @@ func AutoBuyTaobaoV2(buyText string, orderText string, pwText string, payText st
 	actions = append(actions, chromedp.WaitVisible(paySel))
 	actions = append(actions, chromedp.Click(paySel))
 
-	err = chromedp.Run(globalTaskCtx, actions...)
+	err = chromedp.Run(GlobalTaskCtx, actions...)
 	if err != nil {
 		log.Println(err)
 		return err
@@ -457,7 +504,7 @@ func ClickBtnByText(text string) error {
 	// 拼接 xpath 表达式，搜索包含指定文本的a标签
 	sel := fmt.Sprintf(`//a[text()[contains(., '%s')]]`, text)
 
-	err := chromedp.Run(globalTaskCtx,
+	err := chromedp.Run(GlobalTaskCtx,
 		chromedp.Click(sel),
 	)
 	if err != nil {

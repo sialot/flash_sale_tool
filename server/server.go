@@ -176,8 +176,6 @@ func execTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println("EXECTASK > " + taskJson)
-
 	err := webdriver.ExecTask(taskJson)
 
 	if err != nil {
@@ -202,7 +200,7 @@ func execTask(w http.ResponseWriter, r *http.Request) {
 // 取消
 func cancelExec(w http.ResponseWriter, r *http.Request) {
 	var responseStr string
-	webdriver.StopSignal = true
+	webdriver.StopTask()
 	responseStr = `{code:1}`
 	w.Write([]byte(responseStr))
 }
