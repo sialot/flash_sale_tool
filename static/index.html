@@ -68,76 +68,103 @@
         </script>
     </header>
     <body onload="init()">
-        <div class="container-fluid col-lg-6">
-            <div class="panel panel-primary">               
-                <div class="panel-heading">
-                    <h3 class="panel-title">输入商品地址，点击“打开”</h3>
-                </div>
-                <div class="panel-body">
-                    <div class="input-group col-lg-12">
-                        <input id="inputGoodUrl" type="text" class="form-control" placeholder="输入商品页面地址">
-                        <span class="input-group-btn">
-                        <button class="btn btn-default" onclick="openPage()" type="button">打开</button>
-                        <button class="btn btn-default" onclick="refreshCtx()" type="button">刷新上下文</button>
-                        </span>
-                    </div>
-                    <p id="sampWsUrl">{{wsUrl}}</p>
-                    <p style="color:red">继续操作前确认以下事情：</p>
-                    <p style="color:red">1、在 “自动打开” 的商品详情页，提前登录号淘宝账号</p>
-                    <p style="color:red">2、提前选好购买产品的规格</p>
-                    <p style="color:red">3、设置好默认收货地址</p>                                 
-                    <p style="color:red">4、默认支付方式有足够余额购买商品</p>
-                    <p style="color:red">5、让之前  “自动打开”  浏览器标签页，保持在商品秒杀页面</p>          
-                </div>
-            </div>
-
-            <div id="taskList">
-
-                <div class="panel panel-primary" v-for="taskInfo in list">
-                    <div class="panel-heading">
-                        <p class="panel-title">[{{taskInfo.Name}}] [ID:{{taskInfo.ID}}]</p>
-                    </div>
-                    <div class="panel-body">
-                        <div class="form-inline">
-                            <div class="form-group">
-                                <label for="exampleInputName2">执行时间（yyyyMMddHHmmSS）</label>
-                                <input type="text" id="hidTime" type="text" v-model:value="taskInfo.Time" />
+        <div class="container-fluid col-lg-12">
+            <table style="font-size: 12px;">
+                <tr>
+                    <td class="col-lg-10">
+                        <div class="panel panel-primary">          
+                            <div class="panel-heading">
+                                <h3 class="panel-title">输入商品地址，点击“打开”</h3>
                             </div>
-                            <input class="btn btn-primary btn-sm" type="button" v-bind:onclick="['exec(\'' + taskInfo.ID + '\')']" value="开始">
-                            <input class="btn btn-danger btn-sm" type="button" v-bind:onclick="['execCancel(\'' + taskInfo.ID + '\')']" value="取消">
-                        </div>
-                        <div  v-for="(action, i) in taskInfo.Actions">
-                            <span style="font-weight:bold">{{i}}> </span>
-                            <span style="font-weight:bold">行为: </span>
-                            <span class="info" v-if="action.Action === 'WaitVisible'">等待显示</span>
-                            <span class="info" v-else-if="action.Action === 'Click'">点击</span>
-                            <span class="info" v-else-if="action.Action === 'SendKey'">输入字符</span>
-    
-                            <span style="font-weight:bold">对象: </span>
-                            <span class="info" v-if="action.Tag === 'A'">A标签</span>
-                            <span class="info" v-else-if="action.Tag === 'Input'">Input标签</span>
-    
-                            <span style="font-weight:bold">定位方式:</span>
-                            <span class="info" v-if="action.LocateBy === 'ByText'">根据文本</span>
-                            <span class="info" v-else-if="action.LocateBy === 'ByID'">根据ID</span>
-    
-                            <div style="display: inline-block;" v-if="action.LocateBy === 'ByText'">
-                                <span style="font-weight:bold">按以下文本寻找元素:</span>
-                                <input class="info" type="text" v-model:value="action.LocateParam" />
-                            </div>
-                            <div style="display: inline-block;" v-else-if="action.LocateBy === 'ByID'">
-                                <span style="font-weight:bold">按以下ID寻找元素:</span>
-                                <input class="info" type="text" v-model:value="action.LocateParam" />
-                            </div>
-
-                            <div style="display: inline-block;" v-if="action.Param != ''">
-                                <span style="font-weight:bold" >输入参数:</span>
-                                <input class="info" type="text" v-model:value="action.Param" />
+                            <div class="panel-body">
+                                <div class="input-group col-lg-12">
+                                    <input id="inputGoodUrl" type="text" class="form-control input-sm" placeholder="输入商品页面地址">
+                                    <span class="input-group-btn">
+                                    <button class="btn btn-default btn-sm" onclick="openPage()" type="button">打开</button>
+                                    <button class="btn btn-default btn-sm" onclick="refreshCtx()" type="button">刷新上下文</button>
+                                    </span>
+                                </div>
+                                <p id="sampWsUrl">{{wsUrl}}</p>
+                                
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
+            
+                        <div id="taskList">
+            
+                            <div class="panel panel-primary" v-for="taskInfo in list">
+                                <div class="panel-heading">
+                                    <p class="panel-title">[{{taskInfo.Name}}] [ID:{{taskInfo.ID}}]</p>
+                                </div>
+                                <div class="panel-body">
+                                    <div class="form-inline">
+                                        <div class="form-group">
+                                            <label for="exampleInputName2">执行时间（yyyyMMddHHmmSS）</label>
+                                            <input type="text" id="hidTime" type="text" v-model:value="taskInfo.Time" />
+                                        </div>
+                                        <input class="btn btn-primary btn-sm" type="button" v-bind:onclick="['exec(\'' + taskInfo.ID + '\')']" value="开始">
+                                        <input class="btn btn-danger btn-sm" type="button" v-bind:onclick="['execCancel(\'' + taskInfo.ID + '\')']" value="取消">
+                                    </div>
+                                    <div  v-for="(action, i) in taskInfo.Actions">
+                                        <span style="font-weight:bold">{{i}}> </span>
+                                        <span style="font-weight:bold">&nbsp;&nbsp;</span>
+                                        <span style="font-weight:bold">行为: </span>
+                                        <select class="info" v-model="action.Action">                                        
+                                            <option :value="opt.id" v-for="opt in selectOptions.Action" >{{opt.showMsg}}</option>  
+                                        </select>
+
+                                        <!-- <span class="info" v-if="action.Action === 'WaitVisible'">等待显示</span>
+                                        <span class="info" v-else-if="action.Action === 'Click'">点击</span>
+                                        <span class="info" v-else-if="action.Action === 'SendKey'">输入字符</span> -->
+                                        <span style="font-weight:bold">&nbsp;&nbsp;</span>
+                                        <span style="font-weight:bold">对象: </span>
+
+                                        <select class="info" v-model="action.Tag">                                        
+                                            <option :value="opt.id" v-for="opt in selectOptions.Tag" >{{opt.showMsg}}</option>  
+                                        </select>
+
+                                        <!-- <span class="info" v-if="action.Tag === 'A'">A标签</span>
+                                        <span class="info" v-else-if="action.Tag === 'Input'">Input标签</span> -->
+                                        <span style="font-weight:bold">&nbsp;&nbsp;</span>
+                                        <span style="font-weight:bold">根据</span>
+
+                                        <select class="info" v-model="action.LocateBy">                                        
+                                            <option :value="opt.id" v-for="opt in selectOptions.LocateBy" >{{opt.showMsg}}</option>  
+                                        </select>
+
+                                        <!-- <span class="info" v-if="action.LocateBy === 'ByText'">根据文本</span>
+                                        <span class="info" v-else-if="action.LocateBy === 'ByID'">根据ID</span> -->
+                                        <input class="info" type="text" v-model:value="action.LocateParam" />
+                                        <span style="font-weight:bold">定位元素；</span>
+        
+                                        <div style="display: inline-block;" v-if="action.Param != ''">
+                                            <span style="font-weight:bold" >输入:</span>
+                                            <input class="info" type="text" v-model:value="action.Param" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <!-- <td style="vertical-align: top;">
+                        <div class="panel panel-primary">          
+                            <div class="panel-heading">
+                                <h3 class="panel-title">说明</h3>
+                            </div>
+                            <div class="panel-body">
+                                <p style="color:red">0、输入商品页，点击打开按钮，如果按钮无响应请刷新上下文</p>
+                                <p style="color:red">继续操作前确认以下事情：</p>
+                                <p style="color:red">1、在 “自动打开” 的商品详情页，提前登录号淘宝账号</p>
+                                <p style="color:red">2、提前选好购买产品的规格</p>
+                                <p style="color:red">3、设置好默认收货地址</p>                                 
+                                <p style="color:red">4、默认支付方式有足够余额购买商品</p>
+                                <p style="color:red">5、让之前  “自动打开”  浏览器标签页，保持在商品秒杀页面</p> 
+                            </div>
+                        </div>
+                    </td> -->
+                </tr>
+            </table>
+            
+        </div>
     </body>
     <script>
 
@@ -152,7 +179,22 @@
             el:"#taskList",
             data: {
                 list:[
-                ]
+                ],
+                selectOptions:{
+                    Action:[
+                        {id:"WaitVisible",showMsg:"等待显示"},
+                        {id:"Click",showMsg:"点击"},
+                        {id:"SendKey",showMsg:"文本输入"}
+                    ],
+                    Tag:[
+                        {id:"A",showMsg:"<A>"},
+                        {id:"Input",showMsg:"<Input>"}
+                    ],
+                    LocateBy:[
+                        {id:"ByID",showMsg:"ID"},
+                        {id:"ByText",showMsg:"文本"}
+                    ]
+                }
             },
             updated:function(){
         　　}
