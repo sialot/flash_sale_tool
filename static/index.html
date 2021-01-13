@@ -57,14 +57,13 @@
             }
             function refreshCallBack(res){
                 if(res.code != "1"){
-                    alert("刷新失败！")
+                    alert(res.msg)
                     return
                 }
 
                 // 显示调试信息
                 sampWsUrl.wsUrl = "调试地址 > " + res.wsUrl
             }
-
 
         </script>
     </header>
@@ -175,7 +174,12 @@
             taskList.list = res.data
 
             for(var i=0; i<taskList.list.length;i++){
-                taskList.list[i].Time =  generateTimeReqestNumber()
+
+                if(taskList.list[i].DefaultTime != undefined){
+                    taskList.list[i].Time =  generateTimeReqestNumber().substr(0,8) + taskList.list[i].DefaultTime 
+                }else{
+                    taskList.list[i].Time =  generateTimeReqestNumber()
+                }
             }
         }
         function exec(taskId){

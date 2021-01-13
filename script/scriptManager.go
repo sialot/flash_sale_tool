@@ -47,7 +47,8 @@ type Task struct {
 	ID      string   // 处理ID
 	Name    string   // 任务名称
 	Actions []Action // 动作列表
-	Time string // 定时
+	Time string // 定时 yyyyMMddHHmmss
+	DefaultTime string // 默认时间点 HHmmss
 }
 
 var GlobalTasks []Task
