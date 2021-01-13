@@ -37,12 +37,6 @@ func StartServer(port string) {
 	// 打开商品页
 	mux.HandleFunc("/api/execTask", execTask)
 	mux.HandleFunc("/api/cancelExec", cancelExec)
-	
-	// 自动秒杀测试
-	mux.HandleFunc("/api/autoBuyTest", autoBuyTest)
-
-	// 点击按钮测试
-	mux.HandleFunc("/api/clickBtnByText", clickBtnByText)
 
 	// 启动服务
 	svr := http.Server{
@@ -202,90 +196,5 @@ func cancelExec(w http.ResponseWriter, r *http.Request) {
 	var responseStr string
 	webdriver.StopTask()
 	responseStr = `{code:1}`
-	w.Write([]byte(responseStr))
-}
-
-// 自动购买测试 DEMO
-func autoBuyTest(w http.ResponseWriter, r *http.Request) {
-
-	// 返回值
-	var responseStr string
-
-	values := r.URL.Query()
-	buyText := values.Get("buyText")
-	orderText := values.Get("orderText")
-	pwText := values.Get("pwText")
-	payText := values.Get("payText")
-	callback := values.Get("callback")
-
-	if buyText == "" || orderText == "" || pwText == "" || payText == "" {
-		responseStr = `{code:-1}`
-
-		if callback != "" {
-			responseStr = callback + "(" + responseStr + ")"
-		}
-		w.Write([]byte(responseStr))
-		return
-	}
-
-	log.Println("自动购买测试")
-	err := webdriver.AutoBuyTaobaoV2(buyText, orderText, pwText, payText)
-	if err != nil {
-		responseStr = `{code:-1, msg:'` + err.Error() + `'}`
-
-		if callback != "" {
-			responseStr = callback + "(" + responseStr + ")"
-		}
-		w.Write([]byte(responseStr))
-		return
-	}
-
-	responseStr = `{code:1}`
-
-	if callback != "" {
-		responseStr = callback + "(" + responseStr + ")"
-	}
-
-	w.Write([]byte(responseStr))
-}
-
-// 按名称点击按钮 DEMO
-func clickBtnByText(w http.ResponseWriter, r *http.Request) {
-
-	// 返回值
-	var responseStr string
-
-	values := r.URL.Query()
-	text := values.Get("text")
-	callback := values.Get("callback")
-
-	if text == "" {
-		responseStr = `{code:-1}`
-
-		if callback != "" {
-			responseStr = callback + "(" + responseStr + ")"
-		}
-		w.Write([]byte(responseStr))
-		return
-	}
-
-	log.Println("按包含文本点击 a 标签 > " + text)
-	err := webdriver.ClickBtnByText(text)
-	if err != nil {
-		responseStr = `{code:-1, msg:'` + err.Error() + `'}`
-
-		if callback != "" {
-			responseStr = callback + "(" + responseStr + ")"
-		}
-		w.Write([]byte(responseStr))
-		return
-	}
-
-	responseStr = `{code:1}`
-
-	if callback != "" {
-		responseStr = callback + "(" + responseStr + ")"
-	}
-
 	w.Write([]byte(responseStr))
 }
