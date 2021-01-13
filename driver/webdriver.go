@@ -273,40 +273,42 @@ func ExecTask(taskJson string) error {
 
 	var lastPrintStr string = ""
 	go func() {
-		
-		<-ticker.C
+		for {
+			<-ticker.C
 
-		// 取消
-		if StopSignal {
-			log.Println("取消")
-			ticker.Stop()
-			_setTaskProcessFlag(false)
-			return
-		}
+			// 取消
+			if StopSignal {
+				log.Println("取消")
+				ticker.Stop()
+				_setTaskProcessFlag(false)
+				break
+			}
 
-		// 当前时间
-		now := time.Now()
+			// 当前时间
+			now := time.Now()
 
-		// 打印等待状态
-		var printStr = now.Format(timeLayoutStr)
-		if lastPrintStr != printStr {
-			lastPrintStr = printStr
-			fmt.Printf("\r		[等待中]当前时间：%s，目标时间：%s",  printStr, targetTime.Format(timeLayoutStr))
+			// 打印等待状态
+			var printStr = now.Format(timeLayoutStr)
+			if lastPrintStr != printStr {
+				lastPrintStr = printStr
+				fmt.Printf("\r		[等待中]当前时间：%s，目标时间：%s",  printStr, targetTime.Format(timeLayoutStr))
 
-			//根据返回类型定义res
-			var res string
-			ctx, cancel := context.WithTimeout(GlobalTaskCtx, 100*time.Millisecond)
-			defer cancel()
-			_ = chromedp.Run(ctx, chromedp.Tasks{
-				chromedp.Evaluate(`document.title = '抢单中...[` + now.Format("15:04:05") + `]'`, &res),
-			})
-		}
+				//根据返回类型定义res
+				var res string
+				ctx, cancel := context.WithTimeout(GlobalTaskCtx, 100*time.Millisecond)
+				defer cancel()
+				_ = chromedp.Run(ctx, chromedp.Tasks{
+					chromedp.Evaluate(`document.title = '抢单中...[` + now.Format("15:04:05") + `]'`, &res),
+				})
+			}
 
-		// 到达预定时间
-		if now.After(targetTime) {
-			ticker.Stop() //停止定时器
-			err = _runScript(task)
-			_setTaskProcessFlag(false)
+			// 到达预定时间
+			if now.After(targetTime) {
+				ticker.Stop() //停止定时器
+				err = _runScript(task)
+				_setTaskProcessFlag(false)
+				break
+			}
 		}
 	}()
 
