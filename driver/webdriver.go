@@ -260,24 +260,33 @@ func _runScript(task script.Task) error {
 
 	log.Println("执行脚本开始！")
 
-	ctx, cancel := context.WithTimeout(globalTaskCtx, 30000*time.Millisecond)
-	defer cancel()
-
 	// 遍历处理Action
 	var i int
 	for i = 0; i < len(task.Actions); i++ {
 
-		//log.Println("第" + strconv.Itoa(i) + "步")
-
+		// 获得action
 		ac, err := _getChromedpAction(task.Actions[i])
 		if err != nil {
 			log.Println(err)
 			continue
 		}
-		err = chromedp.Run(ctx, ac)
-		if err != nil {
-			log.Println(err)
-			return err
+
+		// 暴力执行每个步骤
+		for {
+			if StopSignal {
+				log.Println("取消操作")
+				break
+			}
+
+			// 超时50ms
+			ctx, cancel := context.WithTimeout(globalTaskCtx, 50*time.Millisecond)
+			err = chromedp.Run(ctx, ac)
+			cancel()
+			if err != nil {
+				continue
+			} else {
+				break
+			}
 		}
 	}
 
