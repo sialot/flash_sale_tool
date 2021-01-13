@@ -35,6 +35,9 @@ var StopSignal bool = false
 var mutex sync.Mutex
 var taskProcessFlag bool = false
 
+// 第一次打开
+var firstOpen = true
+
 // chrome 调试信息对象
 type Page struct {
 	Description          string
@@ -142,6 +145,14 @@ func _startChrome() error {
 func InitContext() error {
 
 	log.Println("INIT CONTEXT > 获取中...")
+
+	// 抢单中无法操作
+	if _getTaskProcessFlag() {
+		log.Println("当前已有任务")
+		var err = errors.New("当前已有任务执行！")
+		return err
+	}
+
 	log.Println("	请求地址：" + "http://localhost:" + RemoteDebugPort + "/json")
 
 	RemoteDebugUrl = ""
@@ -184,7 +195,7 @@ func InitContext() error {
 	}
 	allocCtx, _ := chromedp.NewRemoteAllocator(context.Background(), RemoteDebugUrl)
 	GlobalTaskCtx, _ = chromedp.NewContext(allocCtx, chromedp.WithLogf(log.Printf))
-	
+	firstOpen = true
 	log.Println("INIT CONTEXT >获取成功！")
 	
 	return nil
@@ -194,6 +205,14 @@ func InitContext() error {
 func OpenPage(goodUrl string) error {
 
 	log.Println("打开商品页 > " + goodUrl)
+	
+	// 抢单中无法操作
+	if _getTaskProcessFlag() {
+		log.Println("当前已有任务")
+		var err = errors.New("当前已有任务执行！")
+		return err
+	}
+
 	var res string
 	err := chromedp.Run(GlobalTaskCtx,
 		chromedp.Navigate(goodUrl),
@@ -204,6 +223,7 @@ func OpenPage(goodUrl string) error {
 		log.Println("打开商品页 > 失败")
 		return err
 	}
+	firstOpen = false
 	log.Println("打开商品页 > 成功")
 	
 	return nil
@@ -234,6 +254,10 @@ func _getTaskProcessFlag() bool {
 func ExecTask(taskJson string) error {
 
 	log.Println("EXECTASK > " + taskJson)
+	if firstOpen {
+		var err = errors.New("尚未打开秒杀商品页面！")
+		return err
+	}
 
 	// 防止连点
 	if _getTaskProcessFlag() {
@@ -280,6 +304,7 @@ func ExecTask(taskJson string) error {
 
 			// 取消
 			if StopSignal {
+				fmt.Printf("\n")
 				log.Println("取消")
 				ticker.Stop()
 				_setTaskProcessFlag(false)
@@ -353,7 +378,7 @@ func _runScript(task script.Task) error {
 				if task.Actions[i].Action == script.SendKey {
 					timeout =  5000*time.Millisecond
 				} else {
-					timeout =  20*time.Millisecond
+					timeout =  10*time.Millisecond
 				}
 				ctx, cancel := context.WithTimeout(GlobalTaskCtx, timeout)
 				err = chromedp.Run(ctx, ac)

@@ -83,7 +83,9 @@ func refreshCtx(w http.ResponseWriter, r *http.Request) {
 
 	err := webdriver.InitContext()
 	if err != nil {
-		resultJson = `{code:-1}`
+		resultJson = `refreshCallBack({code:-1, msg:'` + err.Error() + `'})`
+		w.Write([]byte(resultJson))
+		return
 	}
 
 	resultJson += "refreshCallBack({code:1, wsUrl:'" + webdriver.RemoteDebugUrl + "'})"
