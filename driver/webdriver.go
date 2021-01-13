@@ -207,7 +207,7 @@ func OpenPage(goodUrl string) error {
 	return nil
 }
 
-// 脚本执行
+// 执行任务
 func ExecTask(taskJson string) error {
 
 	// 解析json
@@ -256,6 +256,7 @@ func ExecTask(taskJson string) error {
 	return nil
 }
 
+// 脚本执行
 func _runScript(task script.Task) error {
 
 	log.Println("执行脚本开始！")
@@ -265,50 +266,68 @@ func _runScript(task script.Task) error {
 	for i = 0; i < len(task.Actions); i++ {
 
 		// 获得action
-		ac, err := _getChromedpAction(task.Actions[i])
+		var actionInfo = task.Actions[i]
+	
+		ac, err := _getChromedpAction(actionInfo)
 		if err != nil {
 			log.Println(err)
 			continue
 		}
 
-		// 暴力执行每个步骤
-		for {
+		// 超时
+		var timeout time.Duration
+
+		// 等待处理
+		if actionInfo.Action == script.WaitVisible {
+
+			// 暴力执行每个步骤
+			for {
+				if StopSignal {
+					log.Println("取消操作")
+					break
+				}
+
+				// 输入需要更多时间
+				if task.Actions[i].Action == script.SendKey {
+					timeout =  5000*time.Millisecond
+				} else {
+					timeout =  20*time.Millisecond
+				}
+				ctx, cancel := context.WithTimeout(globalTaskCtx, timeout)
+
+				err = chromedp.Run(ctx, ac)
+				cancel()
+				if err != nil {
+
+					if task.Actions[i].Action == script.Click {
+						log.Println(err)
+					}
+					
+					continue
+				} else {
+					break
+				}
+			}
+		} else {
 			if StopSignal {
 				log.Println("取消操作")
 				break
 			}
 
-			// 超时50ms
-			ctx, cancel := context.WithTimeout(globalTaskCtx, 50*time.Millisecond)
+			timeout =  5000*time.Millisecond
+			ctx, cancel := context.WithTimeout(globalTaskCtx, timeout)
+
 			err = chromedp.Run(ctx, ac)
 			cancel()
 			if err != nil {
-				continue
-			} else {
-				break
+				log.Println(err)
+				log.Println("步骤失败")
+				return err
 			}
 		}
+
+		log.Println("完成")
 	}
-
-	// checkCtx, checkCancel := context.WithTimeout(globalTaskCtx, 100*time.Millisecond)
-
-	// i = 0
-	// for {
-	// 	i++
-	// 	if i >= 50 {
-	// 		break
-	// 	}
-	// 	err := chromedp.Run(checkCtx, actions[0])
-	// 	if err != nil {
-
-	// 		continue
-	// 	}
-	// 	if err == nil {
-	// 		log.Println("wait finish")
-	// 		break
-	// 	}
-	// }
-	// checkCancel()
 
 	log.Println("执行脚本完成")
 	log.Println("")
