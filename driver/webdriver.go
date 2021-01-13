@@ -331,10 +331,18 @@ func ExecTask(taskJson string) error {
 
 			// 到达预定时间
 			if now.After(targetTime) {
+
 				fmt.Printf("\n")
+
+				now = time.Now()
+				log.Printf("	开始时间：%s.%d\n",printStr, now.Nanosecond()/1e6)
+
 				ticker.Stop() //停止定时器
 				err = _runScript(task)
 				_setTaskProcessFlag(false)
+
+				now = time.Now()
+				log.Printf("	结束时间：%s.%d\n",printStr, now.Nanosecond()/1e6)
 				break
 			}
 		}
@@ -406,7 +414,8 @@ func _runScript(task script.Task) error {
 				return err
 			}
 		}
-
+		now := time.Now()
+		log.Printf("	step ms：%d\n", now.Nanosecond()/1e6)
 		log.Println("完成")
 	}
 
