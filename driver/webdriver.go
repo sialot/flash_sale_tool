@@ -463,3 +463,17 @@ func _getChromedpAction(action script.Action) (chromedp.Action, error) {
 	var err = errors.New("未知动作")
 	return nil, err
 }
+
+func SaveTask(taskJson string) error{
+	
+	log.Println("SAVETASK > " + taskJson)
+
+	err := script.SaveJson(taskJson)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+
+	log.Println("SAVETASK > 完成")
+	return nil
+}

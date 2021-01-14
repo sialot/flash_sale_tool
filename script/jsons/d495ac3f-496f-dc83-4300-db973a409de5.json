@@ -1,0 +1,1 @@
+{"ID":"d495ac3f-496f-dc83-4300-db973a409de5","Name":"测试","Actions":[{"Action":"WaitVisible","Tag":"A","LocateBy":"ByID","LocateParam":"J_LinkBuy","Param":""},{"Action":"WaitVisible","Tag":"Input","LocateBy":"ByText","LocateParam":"确认付款","Param":""},{"Action":"Click","Tag":"Input","LocateBy":"ByText","LocateParam":"确认付款","Param":""}],"Time":"20210114195959","DefaultTime":"195959"}

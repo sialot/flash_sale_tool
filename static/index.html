@@ -93,22 +93,28 @@
             
                             <div class="panel panel-primary" v-for="taskInfo in list">
                                 <div class="panel-heading">
-                                    <p class="panel-title">[{{taskInfo.Name}}] [ID:{{taskInfo.ID}}]</p>
+                                    <input style="font-size:18px;background:#337ab7;border:0;display: inline;" type="text" v-model:value="taskInfo.Name" />
+                                    <p  style="display: inline;font-size: 12px;" class="panel-title">[ID:{{taskInfo.ID}}]</p>
+                                    <input class="btn btn-default btn-xs" type="button" v-bind:onclick="['_saveAs(\'' + taskInfo.ID + '\')']" value="另存为">
                                 </div>
                                 <div class="panel-body">
                                     <div class="form-inline">
                                         <div class="form-group">
                                             <label for="exampleInputName2">执行时间（yyyyMMddHHmmSS）</label>
-                                            <input type="text" id="hidTime" type="text" v-model:value="taskInfo.Time" />
+                                            <input type="text" v-model:value="taskInfo.Time" />
                                         </div>
-                                        <input class="btn btn-primary btn-sm" type="button" v-bind:onclick="['exec(\'' + taskInfo.ID + '\')']" value="开始">
-                                        <input class="btn btn-danger btn-sm" type="button" v-bind:onclick="['execCancel(\'' + taskInfo.ID + '\')']" value="取消">
+                                        <input class="btn btn-primary btn-xs" type="button" v-bind:onclick="['exec(\'' + taskInfo.ID + '\')']" value="开始">
+                                        <input class="btn btn-danger btn-xs" type="button" v-bind:onclick="['execCancel(\'' + taskInfo.ID + '\')']" value="取消">
                                     </div>
-                                    <div  v-for="(action, i) in taskInfo.Actions">
+                                    <div class="form-inline">
+                                        <input class="btn btn-default btn-xs" type="button"  v-bind:onclick="['_addAction(\'' + taskInfo.ID + '\', 0)']" value="加步骤">
+                                    </div>
+                                    <div  v-for="(action, i) in taskInfo.Actions">                                       
+                                        <a class="btn btn-default btn-xs" type="button" v-bind:onclick="['_addAction(\'' + taskInfo.ID + '\','+i+')']" title="插入步骤">+</a>
+                                        <a class="btn btn-default btn-xs" type="button" v-bind:onclick="['_delAction(\'' + taskInfo.ID + '\','+i+')']" title="删除当前步骤">-</a>
                                         <span style="font-weight:bold">{{i}}> </span>
-                                        <span style="font-weight:bold">&nbsp;&nbsp;</span>
                                         <span style="font-weight:bold">行为: </span>
-                                        <select class="info" v-model="action.Action">                                        
+                                        <select class="info" v-model="action.Action">                            
                                             <option :value="opt.id" v-for="opt in selectOptions.Action" >{{opt.showMsg}}</option>  
                                         </select>
 
@@ -261,6 +267,44 @@
             }
         }
 
+        function _saveAs(taskId){
+            console.log(taskId)
+            var taskInfo = null
+
+            for(var i=0; i<taskList.list.length;i++){
+                if(taskList.list[i].ID = taskId){
+                    taskInfo = taskList.list[i]
+                    break
+                }
+            }
+
+            if(taskInfo == null){
+                return
+            }
+
+            console.log(JSON.stringify(taskInfo))
+
+            if (!_checkParams(taskInfo)) {
+                return
+            }
+            taskJson=encodeURIComponent(JSON.stringify(taskInfo))
+            var url = "http://localhost:4000/api/saveTask?taskJson=" + taskJson + "&callback=saveCallback"
+            jspLoadTool(url)
+        }
+
+        function saveCallback(res){
+            console.log(res)
+            if (res.code == -1) {
+                alert(res.msg)
+            }else{
+                _refreshTasks(res.data)
+            } 
+        }
+
+        function _refreshTasks(){
+            init()
+        }
+
         function _checkParams(taskInfo){
 
             for (action in taskInfo.Actions) {
@@ -270,6 +314,48 @@
                 }
             }
             return true
+        }
+
+        function _addAction(taskId, index){
+            console.log("_addAction>" + taskId + " - " + index)
+            var list = taskList.list
+            var taskInfo
+            for(var i=0;i<list.length;i++){
+                if (list[i].ID ==taskId) {
+                    taskInfo=list[i]
+                    break
+                }
+            }
+            console.log(taskInfo)
+            if(taskInfo){
+
+                var newAction =  {
+                    "Action":"WaitVisible",
+                    "Tag":"A",
+                    "LocateBy":"ByID",
+                    "LocateParam":"--",
+                    "Param":""
+                }
+
+                taskInfo.Actions.splice(index, 0 , newAction)
+            }
+        }
+        function _delAction(taskId, index){
+
+            console.log("_delAction>" + taskId + " - " + index)
+            var list = taskList.list
+            var taskInfo
+            for(var i=0;i<list.length;i++){
+                if (list[i].ID ==taskId) {
+                    taskInfo=list[i]
+                    break
+                }
+            }
+            console.log(taskInfo)
+            if(taskInfo){
+
+                taskInfo.Actions.splice(index,1)
+            }
         }
     </script>
 </html>

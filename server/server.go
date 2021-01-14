@@ -38,6 +38,9 @@ func StartServer(port string) {
 	mux.HandleFunc("/api/execTask", execTask)
 	mux.HandleFunc("/api/cancelExec", cancelExec)
 
+	// 另存为脚本
+	mux.HandleFunc("/api/saveTask", saveTask)
+
 	// 启动服务
 	svr := http.Server{
 		Addr:         ":" + port,
@@ -173,6 +176,45 @@ func execTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err := webdriver.ExecTask(taskJson)
+
+	if err != nil {
+		responseStr = `{code:-1, msg:'` + err.Error() + `'}`
+
+		if callback != "" {
+			responseStr = callback + "(" + responseStr + ")"
+		}
+		w.Write([]byte(responseStr))
+		return
+	}
+
+	responseStr = `{code:1}`
+
+	if callback != "" {
+		responseStr = callback + "(" + responseStr + ")"
+	}
+
+	w.Write([]byte(responseStr))
+}
+
+// 存脚本
+func saveTask(w http.ResponseWriter, r *http.Request) {
+
+	var responseStr string
+	values := r.URL.Query()
+	taskJson := values.Get("taskJson")
+	callback := values.Get("callback")
+
+	if taskJson == "" {
+		responseStr = `{code:-1}`
+
+		if callback != "" {
+			responseStr = callback + "(" + responseStr + ")"
+		}
+		w.Write([]byte(responseStr))
+		return
+	}
+
+	err := webdriver.SaveTask(taskJson)
 
 	if err != nil {
 		responseStr = `{code:-1, msg:'` + err.Error() + `'}`
